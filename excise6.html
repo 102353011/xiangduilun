@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>光在流动介质中的传播 - 慢速清晰版</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { margin-bottom: 15px; color: #4db6ac; }
+        .container { display: flex; gap: 20px; align-items: flex-start; }
+        .left-panel { display: flex; flex-direction: column; align-items: center; }
+        canvas {
+            background-color: #000;
+            border: 2px solid #4db6ac;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(77, 182, 172, 0.2);
+        }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #00796b;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #26a69a; }
+        button.active { background-color: #ff9800; font-weight: bold; }
+
+        .sliders {
+            margin-top: 15px;
+            width: 400px;
+            background: #2c2c2c;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .slider-group { margin-bottom: 10px; }
+        .slider-group label { display: block; margin-bottom: 5px; font-size: 14px; color: #80cbc4; }
+        input[type=range] { width: 100%; cursor: pointer; }
+
+        .info-panel {
+            width: 300px;
+            background: #2c2c2c;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #4db6ac;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-title { color: #ff9800; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        .formula { font-family: 'Times New Roman', serif; background: #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 10px; color: #fff; }
+    </style>
+</head>
+<body>
+    <h2>光在流动介质中的传播 - 慢速演示版</h2>
+    <div class="container">
+        <div class="left-panel">
+            <canvas id="simCanvas" width="800" height="600"></canvas>
+
+            <div class="controls">
+                <button id="btn1" class="active">1. 介质静止</button>
+                <button id="btn2">2. 介质顺流</button>
+                <button id="btn3">3. 介质逆流(向上)</button>
+            </div>
+
+            <div class="sliders">
+                <div class="slider-group">
+                    <label>光速 c (m/s): <span id="valC">3.00</span></label>
+                    <input type="range" id="sliderC" min="1" max="10" step="0.1" value="3">
+                </div>
+                <div class="slider-group">
+                    <label>水流速度 v (m/s): <span id="valV">2.00</span></label>
+                    <input type="range" id="sliderV" min="0" max="5" step="0.1" value="2">
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-title">实时计算过程</div>
+            <div id="calcContent">正在计算...</div>
+            <div class="formula" id="formulaBox">
+                <!-- 公式显示在这里 -->
+            </div>
+        </div>
+    </div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+// UI 元素
+const btn1 = document.getElementById('btn1');
+const btn2 = document.getElementById('btn2');
+const btn3 = document.getElementById('btn3');
+const sliderC = document.getElementById('sliderC');
+const sliderV = document.getElementById('sliderV');
+const valC = document.getElementById('valC');
+const valV = document.getElementById('valV');
+const calcContent = document.getElementById('calcContent');
+const formulaBox = document.getElementById('formulaBox');
+
+// 状态
+let scenario = 1; // 1:静止, 2:顺流, 3:向上
+let c_val = 3.0; // 光速 (模拟值)
+let v_val = 2.0; // 水流速度 (模拟值)
+const n_medium = 1.5; // 介质折射率
+
+// 粒子系统
+let particles = [];
+const PARTICLE_COUNT = 400; // 粒子数量
+
+// 光子对象
+let photon = {
+    x: 0, y: 0,
+    vx: 0, vy: 0,
+    active: false,
+    trail: []
+};
+
+// 初始化粒子
+function initParticles() {
+    particles = [];
+    for(let i=0; i<PARTICLE_COUNT; i++) {
+        particles.push({
+            x: Math.random() * W,
+            y: Math.random() * H
+        });
+    }
+}
+initParticles();
+
+// 按钮事件
+function setScenario(s) {
+    scenario = s;
+    btn1.className = s===1 ? 'active' : '';
+    btn2.className = s===2 ? 'active' : '';
+    btn3.className = s===3 ? 'active' : '';
+    resetPhoton();
+}
+btn1.onclick = () => setScenario(1);
+btn2.onclick = () => setScenario(2);
+btn3.onclick = () => setScenario(3);
+
+// 滑块事件
+sliderC.oninput = function() {
+    c_val = parseFloat(this.value);
+    valC.innerText = c_val.toFixed(2);
+    updateCalculations();
+};
+sliderV.oninput = function() {
+    v_val = parseFloat(this.value);
+    valV.innerText = v_val.toFixed(2);
+    updateCalculations();
+};
+
+// 重置光子
+function resetPhoton() {
+    photon.x = 100;
+    photon.y = H / 2;
+    photon.trail = [];
+    photon.active = true;
+}
+resetPhoton();
+
+// 更新计算面板
+function updateCalculations() {
+    let text = "";
+    let formula = "";
+
+    // 菲涅耳拖拽系数 f
+    const f = 1 - (1 / (n_medium * n_medium));
+
+    if (scenario === 1) {
+        text = `<b>场景：介质静止</b><br>
+                光速 c = ${c_val} <br>
+                介质折射率 n = ${n_medium} <br>
+                光在介质中速度 v_light = c / n = ${(c_val / n_medium).toFixed(2)} <br>
+                水流速度 v = 0`;
+        formula = "光沿直线传播";
+    }
+    else if (scenario === 2) {
+        text = `<b>场景：介质水平流动</b><br>
+                光速 c = ${c_val} <br>
+                水流速度 v = ${v_val} <br>
+                拖拽系数 f = 1 - 1/n² ≈ ${f.toFixed(3)} <br>
+                光被拖拽速度 = v × f = ${(v_val * f).toFixed(2)}`;
+        formula = "tan(θ) = (v·f) / (c/n)";
+    }
+    else {
+        text = `<b>场景：介质竖直向上流动</b><br>
+                光速 c = ${c_val} <br>
+                水流速度 v = ${v_val} (向上) <br>
+                拖拽系数 f = 1 - 1/n² ≈ ${f.toFixed(3)} <br>
+                光被拖拽速度 = v × f = ${(v_val * f).toFixed(2)} (向上)`;
+        formula = "光斜向上运动";
+    }
+
+    calcContent.innerHTML = text;
+    formulaBox.innerText = formula;
+}
+updateCalculations();
+
+// 主循环
+function animate() {
+    ctx.clearRect(0, 0, W, H);
+
+    // 1. 绘制背景网格 (可选，增加科技感)
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1;
+    for(let i=0; i<W; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,H); ctx.stroke(); }
+    for(let i=0; i<H; i+=40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+
+    // 2. 更新并绘制粒子 (全屏铺满，循环流动)
+    ctx.fillStyle = '#00B0FF'; // 亮蓝色
+    particles.forEach(p => {
+        // 根据场景移动粒子
+        if (scenario === 1) {
+            // 静止：微小抖动
+            p.x += (Math.random() - 0.5);
+            p.y += (Math.random() - 0.5);
+            // 边界检查
+            if(p.x<0) p.x=W; if(p.x>W) p.x=0;
+            if(p.y<0) p.y=H; if(p.y>H) p.y=0;
+        }
+        else if (scenario === 2) {
+            // 水平向右
+            p.x += v_val * 2; // 视觉放大系数
+            if(p.x > W) p.x = 0; // 循环
+        }
+        else {
+            // 竖直向上 (场景3)
+            p.y -= v_val * 2; // 视觉放大系数，向上是减
+            if(p.y < 0) p.y = H; // 循环
+        }
+
+        ctx.fillRect(p.x, p.y, 2, 2);
+    });
+
+    // 3. 更新光子物理逻辑
+    if (photon.active) {
+        // 基础光速分量 (x方向)
+        let base_vx = c_val / n_medium;
+        let base_vy = 0;
+
+        // 拖拽分量
+        let drag_vx = 0;
+        let drag_vy = 0;
+        const f = 1 - (1 / (n_medium * n_medium));
+
+        if (scenario === 2) {
+            drag_vx = v_val * f;
+        } else if (scenario === 3) {
+            drag_vy = -v_val * f; // 向上为负
+        }
+
+        // 总速度
+        let total_vx = base_vx + drag_vx;
+        let total_vy = base_vy + drag_vy;
+
+        // === 视觉降速处理 ===
+        // 我们不改变角度，只改变步长，让肉眼能看清
+        const visualSpeedFactor = 0.2; // 0.2倍速度，即慢了5倍
+        let move_x = total_vx * visualSpeedFactor;
+        let move_y = total_vy * visualSpeedFactor;
+
+        photon.x += move_x;
+        photon.y += move_y;
+
+        // 记录轨迹
+        photon.trail.push({x: photon.x, y: photon.y});
+        if (photon.trail.length > 50) photon.trail.shift();
+
+        // 检查边界（接收器或出界）
+        // 接收器位置逻辑：
+        // 场景1,2：在右侧 H/2
+        // 场景3：在右侧 H/2 (光会打偏，但接收器不动)
+        let receiverX = W - 100;
+        let receiverY = H / 2;
+
+        let hit = false;
+        // 简单的碰撞检测
+        if (photon.x >= receiverX - 10 && photon.x <= receiverX + 10) {
+            if (Math.abs(photon.y - receiverY) < 30) {
+                hit = true;
+            }
+        }
+
+        // 如果飞出屏幕上下边界，也重置
+        if (photon.y < 0 || photon.y > H || photon.x > W) {
+            // 稍微延迟重置，让用户看到飞出去的效果
+            setTimeout(resetPhoton, 1000);
+            photon.active = false;
+        }
+
+        if (hit) {
+            setTimeout(resetPhoton, 1000); // 1秒后重发
+            photon.active = false;
+        }
+    }
+
+    // 4. 绘制光子轨迹
+    if (photon.trail.length > 1) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.moveTo(photon.trail[0].x, photon.trail[0].y);
+        for(let p of photon.trail) ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+    }
+
+    // 5. 绘制发射器 (左侧)
+    ctx.fillStyle = '#00E676'; // 绿色发射器
+    ctx.fillRect(80, H/2 - 10, 20, 20);
+    ctx.fillStyle = '#fff';
+    ctx.font = "12px sans-serif";
+    ctx.fillText("光源", 82, H/2 + 25);
+
+    // 6. 绘制接收器 (右侧)
+    ctx.fillStyle = '#FF5252'; // 红色接收器
+    ctx.fillRect(W - 100, H/2 - 10, 20, 20);
+    ctx.fillStyle = '#fff';
+    ctx.fillText("接收器", W - 98, H/2 + 25);
+
+    // 绘制光子本身
+    if (photon.active) {
+        ctx.fillStyle = '#FFFF00'; // 黄色光子
+        ctx.beginPath();
+        ctx.arc(photon.x, photon.y, 5, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>

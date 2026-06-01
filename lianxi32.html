@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相对论车厢小球运动 教学演示</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body {
+            font-family: "Microsoft Yahei",sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .main-box{
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px #00000018;
+        }
+        h1{
+            text-align: center;
+            color: #2c52b3;
+            margin-bottom: 20px;
+        }
+        .control-bar{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            padding: 16px;
+            background: #f0f6ff;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .ctrl-item{
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        label{font-weight: 600;color: #222;}
+        input[type="range"]{width: 160px;}
+        input[type="number"]{padding:6px;border:1px solid #ccc;border-radius:4px;width:100px;}
+        .btn-group{display:flex;gap:10px;}
+        button{
+            padding:7px 14px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:14px;
+            transition:0.2s;
+        }
+        .start{background:#27ae60;color:#fff;}
+        .reset{background:#e74c3c;color:#fff;}
+        .pause{background:#f39c12;color:#fff;}
+        .formula-btn{background:#3498db;color:#fff;}
+        .step-btn{background:#9b59b6;color:#fff;}
+        button:hover{opacity:0.9;}
+        .canvas-wrap{
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin:20px 0;
+        }
+        .canvas-card{text-align:center;}
+        .canvas-card h3{margin-bottom:10px;color:#333;}
+        canvas{
+            border:2px solid #444;
+            border-radius:8px;
+            background:#f8fbff;
+        }
+        .data-show{
+            padding:18px;
+            background:#fef8f0;
+            border-radius:10px;
+            line-height:1.8;
+            font-size:15px;
+        }
+        /* 推导弹窗样式 */
+        .mask{
+            position:fixed;
+            top:0;left:0;
+            width:100%;height:100%;
+            background:#00000066;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            z-index:999;
+        }
+        .pop-box{
+            width:750px;
+            max-height:85vh;
+            overflow-y:auto;
+            background:#fff;
+            padding:25px;
+            border-radius:12px;
+        }
+        .pop-box h2{
+            text-align:center;
+            color:#2c52b3;
+            margin-bottom:20px;
+        }
+        .deriv-step{
+            margin:15px 0;
+            padding:12px;
+            border-left:4px solid #3498db;
+            background:#f5f9ff;
+        }
+        .deriv-step h4{margin-bottom:8px;color:#222;}
+        .formula-text{
+            font-size:16px;
+            margin:6px 0;
+            font-weight:500;
+        }
+        .close-pop{
+            display:block;
+            margin:20px auto 0;
+            padding:8px 25px;
+            background:#e74c3c;
+            color:#fff;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-box">
+        <h1>相对论车厢小球运动 双参考系动态演示</h1>
+
+        <div class="control-bar">
+            <div class="ctrl-item">
+                <label>车厢速度 v：<span id="vTxt">0.6c</span></label>
+                <input type="range" id="vSpeed" min="0" max="0.99" step="0.01" value="0.6">
+            </div>
+            <div class="ctrl-item">
+                <label>小球相对车厢速度 u₀：<span id="u0Txt">0.8c</span></label>
+                <input type="range" id="u0Speed" min="0.1" max="0.99" step="0.01" value="0.8">
+            </div>
+            <div class="ctrl-item">
+                <label>车厢固有长度 L₀(m)</label>
+                <input type="number" id="len0" value="10">
+            </div>
+            <div class="btn-group">
+                <button class="start" id="playBtn">开始播放</button>
+                <button class="pause" id="pauseBtn">暂停</button>
+                <button class="reset" id="restBtn">重置</button>
+                <button class="step-btn" id="stepPlay">分步演示</button>
+                <button class="formula-btn" id="openDerive">公式推导</button>
+            </div>
+        </div>
+
+        <div class="canvas-wrap">
+            <div class="canvas-card">
+                <h3>地面静止参考系 S</h3>
+                <canvas id="sCanvas" width="850" height="220"></canvas>
+            </div>
+            <div class="canvas-card">
+                <h3>运动车厢参考系 S'</h3>
+                <canvas id="sPrimeCanvas" width="850" height="220"></canvas>
+            </div>
+        </div>
+
+        <div class="data-show">
+            <p>1. 相对论速度变换：地面系小球速度 u = <span id="uRes"></span> c</p>
+            <p>2. 地面观测车厢收缩长度：L = <span id="lenRes"></span> m</p>
+            <p>3. 车厢参考系运动时长 Δt' = <span id="t1Res"></span> s</p>
+            <p>4. 地面参考系运动时长 Δt = <span id="t2Res"></span> s</p>
+            <p>5. 核心结论：运动参考系时间变慢，长度发生洛伦兹收缩</p>
+        </div>
+    </div>
+
+    <!-- 公式推导弹窗 -->
+    <div class="mask" id="popMask">
+        <div class="pop-box">
+            <h2>相对论本题完整分步公式推导</h2>
+            <div class="deriv-step">
+                <h4>步骤1：已知基础物理量</h4>
+                <div class="formula-text">
+                    光速 c，车厢对地速度 v，小球相对车厢速度 u₀，车厢固有长度 L₀
+                </div>
+            </div>
+            <div class="deriv-step">
+                <h4>步骤2：洛伦兹因子定义</h4>
+                <div class="formula-text">γ = 1 / √(1 - v²/c²)</div>
+            </div>
+            <div class="deriv-step">
+                <h4>步骤3：长度收缩公式（地面视角）</h4>
+                <div class="formula-text">L = L₀·√(1 - v²/c²)</div>
+                <p>运动物体沿运动方向长度缩短</p>
+            </div>
+            <div class="deriv-step">
+                <h4>步骤4：相对论速度正变换</h4>
+                <div class="formula-text">u = (u₀ + v) / (1 + u₀v/c²)</div>
+                <p>高速运动不可直接伽利略速度叠加</p>
+            </div>
+            <div class="deriv-step">
+                <h4>步骤5：车厢参考系运动时间</h4>
+                <div class="formula-text">Δt' = L₀ / u₀</div>
+                <p>车厢内观察者：车厢静止，匀速走完固有长度</p>
+            </div>
+            <div class="deriv-step">
+                <h4>步骤6：地面参考系运动时间（本题核心公式）</h4>
+                <div class="formula-text">Δt = L₀(1+u₀v/c²) / [u₀√(1-v²/c²)]</div>
+                <p>同时满足长度收缩+速度变换双重效应</p>
+            </div>
+            <div class="deriv-step">
+                <h4>步骤7：时间膨胀关系验证</h4>
+                <p>地面观测时间 > 车厢内固有运动时间，完美契合狭义相对论时间膨胀效应</p>
+            </div>
+            <button class="close-pop" id="closePop">关闭推导</button>
+        </div>
+    </div>
+
+    <script>
+        const c = 3e8;
+        // 元素获取
+        const vSpeed = document.getElementById('vSpeed');
+        const u0Speed = document.getElementById('u0Speed');
+        const len0 = document.getElementById('len0');
+        const vTxt = document.getElementById('vTxt');
+        const u0Txt = document.getElementById('u0Txt');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const restBtn = document.getElementById('restBtn');
+        const stepPlay = document.getElementById('stepPlay');
+        const openDerive = document.getElementById('openDerive');
+        const closePop = document.getElementById('closePop');
+        const popMask = document.getElementById('popMask');
+
+        const sCan = document.getElementById('sCanvas');
+        const spCan = document.getElementById('sPrimeCanvas');
+        const sCtx = sCan.getContext('2d');
+        const spCtx = spCan.getContext('2d');
+
+        const uRes = document.getElementById('uRes');
+        const lenRes = document.getElementById('lenRes');
+        const t1Res = document.getElementById('t1Res');
+        const t2Res = document.getElementById('t2Res');
+
+        // 全局状态
+        let isPlay = false;
+        let isPause = false;
+        let animId = null;
+        let nowTime = 0;
+        let vRate = 0.6, u0Rate = 0.8;
+        let L0 = 10;
+        let v,u0,u,L,dt1,dt2;
+
+        // 弹窗开关
+        openDerive.onclick = ()=>popMask.style.display='flex';
+        closePop.onclick = ()=>popMask.style.display='none';
+
+        // 滑块实时更新文字
+        vSpeed.oninput = ()=>{
+            vRate = Number(vSpeed.value);
+            vTxt.innerText = vRate+'c';
+            calcAll();drawScene();
+        }
+        u0Speed.oninput = ()=>{
+            u0Rate = Number(u0Speed.value);
+            u0Txt.innerText = u0Rate+'c';
+            calcAll();drawScene();
+        }
+        len0.oninput = ()=>{
+            L0 = Number(len0.value);
+            calcAll();drawScene();
+        }
+
+        // 全部物理量计算
+        function calcAll(){
+            v = vRate * c;
+            u0 = u0Rate * c;
+            // 速度变换
+            u = (u0 + v) / (1 + u0*v/(c*c));
+            // 收缩长度
+            L = L0 * Math.sqrt(1 - v*v/(c*c));
+            // 车厢系时间
+            dt1 = L0 / u0;
+            // 地面系时间
+            dt2 = (L0*(1 + u0*v/(c*c))) / (u0 * Math.sqrt(1 - v*v/(c*c)));
+
+            // 赋值显示
+            uRes.innerText = (u/c).toFixed(4);
+            lenRes.innerText = L.toFixed(2);
+            t1Res.innerText = dt1.toFixed(12);
+            t2Res.innerText = dt2.toFixed(12);
+        }
+
+        // 绘制双视角场景
+        function drawScene(){
+            // 清空画布
+            sCtx.clearRect(0,0,sCan.width,sCan.height);
+            spCtx.clearRect(0,0,spCan.width,spCan.height);
+
+            // ========== 地面S系绘制 ==========
+            sCtx.fillStyle='#eee';
+            sCtx.fillRect(0,180,sCan.width,40);
+            let carBaseX = 60 + (nowTime/dt2)*(sCan.width-180);
+            let carShowW = 180 * (L/L0);
+            // 车厢
+            sCtx.fillStyle='#3498db';
+            sCtx.fillRect(carBaseX,120,carShowW,50);
+            sCtx.strokeStyle='#222';
+            sCtx.strokeRect(carBaseX,120,carShowW,50);
+            // 小球
+            let ballSx = carBaseX + (nowTime/dt2)*carShowW;
+            sCtx.beginPath();
+            sCtx.arc(ballSx,145,9,0,Math.PI*2);
+            sCtx.fillStyle='#e74c3c';
+            sCtx.fill();
+            sCtx.stroke();
+            // 文字标注
+            sCtx.font='14px sans-serif';
+            sCtx.fillStyle='#000';
+            sCtx.fillText(`车厢速度${vRate}c`,20,30);
+            sCtx.fillText(`小球对地速度${(u/c).toFixed(2)}c`,20,55);
+
+            // ========== 车厢S'系绘制 ==========
+            spCtx.fillStyle='#3498db';
+            spCtx.fillRect(60,120,180,50);
+            spCtx.strokeStyle='#222';
+            spCtx.strokeRect(60,120,180,50);
+            // 小球
+            let ballSPx = 60 + (nowTime/dt1)*180;
+            spCtx.beginPath();
+            spCtx.arc(ballSPx,145,9,0,Math.PI*2);
+            spCtx.fillStyle='#e74c3c';
+            spCtx.fill();
+            spCtx.stroke();
+            // 文字
+            spCtx.font='14px sans-serif';
+            spCtx.fillStyle='#000';
+            spCtx.fillText(`车厢静止`,20,30);
+            spCtx.fillText(`小球相对车厢${u0Rate}c`,20,55);
+        }
+
+        // 主动画
+        function animateRun(){
+            if(!isPlay||isPause) return;
+            nowTime += 8e-11;
+            if(nowTime>=Math.max(dt1,dt2)) nowTime=0;
+            drawScene();
+            animId = requestAnimationFrame(animateRun);
+        }
+
+        // 播放暂停重置
+        playBtn.onclick=()=>{
+            if(isPlay)return;
+            isPlay=true;isPause=false;
+            animateRun();
+        }
+        pauseBtn.onclick=()=>{
+            isPause=!isPause;
+        }
+        restBtn.onclick=()=>{
+            cancelAnimationFrame(animId);
+            isPlay=false;isPause=false;
+            nowTime=0;
+            drawScene();
+        }
+        // 分步慢速演示
+        stepPlay.onclick=()=>{
+            cancelAnimationFrame(animId);
+            isPlay=true;isPause=false;
+            nowTime += 2e-10;
+            if(nowTime>=Math.max(dt1,dt2)) nowTime=0;
+            drawScene();
+        }
+
+        // 初始化
+        calcAll();
+        drawScene();
+    </script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>狭义相对论：长度收缩动态演示 | 3D交互式物理模拟</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'Poppins', 'Roboto', sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 10;
+            font-size: 14px;
+            border-left: 4px solid #00aaff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-weight: 500;
+        }
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            background: rgba(30,30,40,0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px 25px;
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            z-index: 20;
+            font-family: monospace;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            pointer-events: auto;
+        }
+        .slider-container {
+            flex: 3;
+            min-width: 200px;
+        }
+        .speed-value {
+            flex: 1;
+            text-align: center;
+            background: #000000aa;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .length-panel {
+            display: flex;
+            gap: 30px;
+            background: #1e1e2e;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+        }
+        .length-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .length-label {
+            font-size: 14px;
+            color: #ccc;
+        }
+        .length-value {
+            font-size: 22px;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
+        }
+        .static-color { color: #4cafef; }
+        .moving-color { color: #ff7e5e; }
+        button {
+            background: #2c3e66;
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #1e2a48;
+            transform: scale(1.02);
+        }
+        input {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ff7e5e;
+        }
+        @media (max-width: 700px) {
+            .length-panel { gap: 15px; padding: 5px 15px; }
+            .length-value { font-size: 18px; }
+            .slider-container { min-width: 150px; }
+            #controls { flex-direction: column; align-items: stretch; bottom: 15px; left: 15px; right: 15px; }
+        }
+        .note {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        ⚛️ 狭义相对论 · 长度收缩效应 (Lorentz Contraction) 
+        <span style="font-size:12px;">| 静系 (蓝色) 固有长度 L₀ = 4.0 | 动系 (红色) 运动长度 L = L₀/γ</span>
+    </div>
+    <div id="controls">
+        <div class="slider-container">
+            <label style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>🚀 相对速度 v / c : </span>
+                <span id="speedPercent" style="color:#ffaa88;">0.00</span>
+            </label>
+            <input type="range" id="velocitySlider" min="0" max="0.99" step="0.002" value="0.6">
+        </div>
+        <div class="speed-value">
+            β = v/c = <span id="betaVal">0.600</span><br>
+            γ = <span id="gammaVal">1.250</span>
+        </div>
+        <div class="length-panel">
+            <div class="length-item">
+                <span class="length-label static-color">📏 静系长度 (固有长度)</span>
+                <span class="length-value static-color" id="staticLength">4.00</span>
+                <span style="font-size:14px;">m</span>
+            </div>
+            <div class="length-item">
+                <span class="length-label moving-color">🏃 动系长度 (观测收缩)</span>
+                <span class="length-value moving-color" id="movingLength">3.20</span>
+                <span style="font-size:14px;">m</span>
+            </div>
+        </div>
+        <button id="resetBtn">重置速度 (0.6c)</button>
+        <div class="note">※ 红色标尺随速度增大而缩短 | 三维动态参考系</div>
+    </div>
+
+    <!-- 引入 Three.js 核心库及扩展 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- 初始化场景、相机、渲染器 ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050b1a); // 深邃星空色
+        scene.fog = new THREE.FogExp2(0x050b1a, 0.008); // 轻微雾效增强景深
+
+        // 透视相机 (视角,宽高比,近平面,远平面)
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 6, 12);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // 开启阴影映射增强质感
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // CSS2渲染文字标签
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
+        // --- 轨道控制，允许用户自由观察动态3D场景 ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;      // 惯性效果
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        controls.zoomSpeed = 1.2;
+        controls.rotateSpeed = 1.0;
+        controls.target.set(0, 0, 0);
+
+        // --- 辅助元素: 网格地面、环境光、点光源，增强立体感 ---
+        // 地面网格参考 (XZ平面，Y= -1.2 位置，让尺子悬浮空中更明显)
+        const gridHelper = new THREE.GridHelper(20, 20, 0x88aaff, 0x335588);
+        gridHelper.position.y = -1.2;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.45;
+        scene.add(gridHelper);
+        
+        // 简易轴线: X (红), Z (蓝) 轻量指示
+        const axesHelper = new THREE.AxesHelper(5);
+        axesHelper.material.transparent = true;
+        axesHelper.material.opacity = 0.2;
+        scene.add(axesHelper);
+        
+        // 环境光
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        // 主光源方向光
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(2, 5, 3);
+        dirLight.castShadow = true;
+        dirLight.receiveShadow = false;
+        scene.add(dirLight);
+        // 背光补光
+        const backLight = new THREE.PointLight(0x4466cc, 0.3);
+        backLight.position.set(-2, 1, -3);
+        scene.add(backLight);
+        // 暖色填充
+        const fillLight = new THREE.PointLight(0xffaa66, 0.2);
+        fillLight.position.set(1, 2, 2);
+        scene.add(fillLight);
+        
+        // 星星粒子效果 (增加视觉动态)
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 1200;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 200;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 80;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        
+        // --- 核心模型: 代表两个参考系的“尺子”---
+        // 静系参考系 (静止，长度固定为固有长度 L0 = 4.0 米)
+        // 动系参考系 (运动，沿X轴正方向速度 v，长度根据洛伦兹收缩: L = L0 / γ)
+        
+        const PROPER_LENGTH = 4.0;  // 固有长度(静系长度) 单位: 抽象单位
+        
+        // 1. 静态参考系物体: 一个半透明蓝色长方体 + 金色边框，两端带小球体标记
+        const staticGroup = new THREE.Group();
+        
+        // 主体: 长方体 (长=PROPER_LENGTH, 高0.2, 深0.4)
+        const staticBoxGeo = new THREE.BoxGeometry(PROPER_LENGTH, 0.18, 0.45);
+        const staticMat = new THREE.MeshStandardMaterial({ color: 0x3a86ff, emissive: 0x001133, roughness: 0.3, metalness: 0.7, transparent: true, opacity: 0.7 });
+        const staticBox = new THREE.Mesh(staticBoxGeo, staticMat);
+        staticBox.castShadow = true;
+        staticBox.receiveShadow = false;
+        staticBox.position.set(0, 0, 0);
+        staticGroup.add(staticBox);
+        
+        // 边框 (EdgesGeometry 增加科技感)
+        const edgesGeo = new THREE.EdgesGeometry(staticBoxGeo);
+        const edgesMat = new THREE.LineBasicMaterial({ color: 0x7abaff });
+        const wireframe = new THREE.LineSegments(edgesGeo, edgesMat);
+        wireframe.position.copy(staticBox.position);
+        staticGroup.add(wireframe);
+        
+        // 两端端点小球体 (标识端点)
+        const sphereMat = new THREE.MeshStandardMaterial({ color: 0x5a9eff, emissive: 0x224466 });
+        const leftSphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), sphereMat);
+        leftSphere.position.set(-PROPER_LENGTH/2, 0, 0);
+        const rightSphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), sphereMat);
+        rightSphere.position.set(PROPER_LENGTH/2, 0, 0);
+        staticGroup.add(leftSphere);
+        staticGroup.add(rightSphere);
+        
+        scene.add(staticGroup);
+        
+        // 静态参考系的CSS2D标签
+        const staticLabelDiv = document.createElement('div');
+        staticLabelDiv.textContent = `🔵 静系 (S)  固有长度 L₀ = ${PROPER_LENGTH.toFixed(2)}`;
+        staticLabelDiv.style.color = '#aaddff';
+        staticLabelDiv.style.fontSize = '14px';
+        staticLabelDiv.style.fontWeight = 'bold';
+        staticLabelDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        staticLabelDiv.style.padding = '2px 8px';
+        staticLabelDiv.style.borderRadius = '20px';
+        staticLabelDiv.style.borderLeft = `3px solid #3a86ff`;
+        staticLabelDiv.style.fontFamily = 'monospace';
+        const staticLabelObj = new CSS2DObject(staticLabelDiv);
+        staticLabelObj.position.set(0, 0.45, 0);
+        staticGroup.add(staticLabelObj);
+        
+        // 2. 动态参考系物体 (红色系，长度会随速度改变)
+        const movingGroup = new THREE.Group();
+        // 动态主体 (初始长度 4, 后续动态缩放 X 轴)
+        const movingMat = new THREE.MeshStandardMaterial({ color: 0xff5e4a, emissive: 0x441100, roughness: 0.4, metalness: 0.3, transparent: true, opacity: 0.85 });
+        let movingBoxMesh = new THREE.Mesh(new THREE.BoxGeometry(PROPER_LENGTH, 0.2, 0.5), movingMat);
+        movingBoxMesh.castShadow = true;
+        movingGroup.add(movingBoxMesh);
+        
+        // 动态边框 (动态更新)
+        let movingEdges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(PROPER_LENGTH, 0.2, 0.5)), new THREE.LineBasicMaterial({ color: 0xffaa88 }));
+        movingGroup.add(movingEdges);
+        
+        // 动态端点小球 (位置需要随长度更新)
+        const leftSphereMoving = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 20), new THREE.MeshStandardMaterial({ color: 0xff7e5e, emissive: 0x662200 }));
+        const rightSphereMoving = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 20), new THREE.MeshStandardMaterial({ color: 0xff7e5e, emissive: 0x662200 }));
+        movingGroup.add(leftSphereMoving);
+        movingGroup.add(rightSphereMoving);
+        
+        // 添加动态流动粒子效果 (增强速度感)
+        const particleCount = 80;
+        const particlePositions = [];
+        const particleVelocities = []; // 伪随机偏移用，实际粒子围绕移动尺子周围流动
+        
+        const particleGeometry = new THREE.BufferGeometry();
+        const particleMaterial = new THREE.PointsMaterial({ color: 0xffaa77, size: 0.05, transparent: true, opacity: 0.6 });
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        movingGroup.add(particles);
+        
+        // 初始化粒子数组 (相对movingGroup局部坐标)
+        function initParticles() {
+            const positions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount; i++) {
+                // 分布在尺子周围，x从 -L/2 到 L/2 随机
+                const x = (Math.random() - 0.5) * PROPER_LENGTH;
+                const y = (Math.random() - 0.5) * 0.4 + 0.1;
+                const z = (Math.random() - 0.5) * 0.6;
+                positions[i*3] = x;
+                positions[i*3+1] = y;
+                positions[i*3+2] = z;
+                particlePositions.push({ x, y, z, speedFactor: 0.5 + Math.random() * 0.8 });
+            }
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        }
+        initParticles();
+        
+        // 动系的CSS2D标签
+        const movingLabelDiv = document.createElement('div');
+        movingLabelDiv.textContent = `🔴 动系 (S')  运动长度 L = ?`;
+        movingLabelDiv.style.color = '#ffb7a0';
+        movingLabelDiv.style.fontSize = '14px';
+        movingLabelDiv.style.fontWeight = 'bold';
+        movingLabelDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        movingLabelDiv.style.padding = '2px 8px';
+        movingLabelDiv.style.borderRadius = '20px';
+        movingLabelDiv.style.borderLeft = `3px solid #ff5e4a`;
+        const movingLabelObj = new CSS2DObject(movingLabelDiv);
+        movingLabelObj.position.set(0, 0.5, 0);
+        movingGroup.add(movingLabelObj);
+        
+        scene.add(movingGroup);
+        
+        // 添加一个飘逸的光晕效果: 围绕动系的轨迹线 (增强视觉)
+        const trailLineMat = new THREE.LineBasicMaterial({ color: 0xff6644 });
+        const trailPoints = [];
+        for (let i = -3; i <= 3; i+=0.2) trailPoints.push(new THREE.Vector3(i, -0.3, -0.8));
+        const trailLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(trailPoints), trailLineMat);
+        scene.add(trailLine);
+        
+        // 动态更新动系模型 (根据洛伦兹因子改变长度)
+        let currentGamma = 1.0;
+        let currentMovingLength = PROPER_LENGTH;
+        
+        function updateMovingLength(beta) {
+            // beta = v/c , 0 <= beta < 1
+            const gamma = 1 / Math.sqrt(1 - beta * beta);
+            currentGamma = gamma;
+            const contractedLength = PROPER_LENGTH / gamma;
+            currentMovingLength = contractedLength;
+            
+            // 更新动态方块几何体
+            const newWidth = contractedLength;
+            // 更新主体网格
+            movingGroup.remove(movingBoxMesh);
+            movingBoxMesh = new THREE.Mesh(new THREE.BoxGeometry(newWidth, 0.2, 0.5), movingMat);
+            movingBoxMesh.castShadow = true;
+            movingGroup.add(movingBoxMesh);
+            
+            // 更新边框
+            movingGroup.remove(movingEdges);
+            movingEdges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(newWidth, 0.2, 0.5)), new THREE.LineBasicMaterial({ color: 0xffaa88 }));
+            movingGroup.add(movingEdges);
+            
+            // 更新端点小球位置
+            leftSphereMoving.position.set(-newWidth/2, 0, 0);
+            rightSphereMoving.position.set(newWidth/2, 0, 0);
+            
+            // 更新CSS2D标签文字
+            movingLabelDiv.textContent = `🔴 动系 (S')  运动长度 L = ${contractedLength.toFixed(3)}  (γ = ${gamma.toFixed(3)})`;
+            
+            // 更新粒子位置范围: 重新生成粒子使其分布在新长度范围内
+            const positionsAttr = particleGeometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                // 重新随机范围基于新长度
+                const x = (Math.random() - 0.5) * contractedLength;
+                const y = (Math.random() - 0.5) * 0.4 + 0.1;
+                const z = (Math.random() - 0.5) * 0.6;
+                positionsAttr[i*3] = x;
+                positionsAttr[i*3+1] = y;
+                positionsAttr[i*3+2] = z;
+                if (particlePositions[i]) {
+                    particlePositions[i].x = x;
+                    particlePositions[i].y = y;
+                    particlePositions[i].z = z;
+                }
+            }
+            particleGeometry.attributes.position.needsUpdate = true;
+            
+            // 更新静系长度显示/动系长度显示的数字
+            document.getElementById('staticLength').innerText = PROPER_LENGTH.toFixed(3);
+            document.getElementById('movingLength').innerText = contractedLength.toFixed(3);
+            document.getElementById('betaVal').innerText = beta.toFixed(4);
+            document.getElementById('gammaVal').innerText = gamma.toFixed(4);
+            const percent = (beta * 100).toFixed(1);
+            document.getElementById('speedPercent').innerHTML = `${percent}% c`;
+        }
+        
+        // --- 动态速度逻辑: 滑块控制速度 v/c 并移动动系的位置动画 (让动系沿X轴运动，强调相对性)---
+        // 动系实际在空间中沿X正方向以速度 v 运动 (模拟运动参考系)，为了视觉反馈，我们让 movingGroup 位置随时间增加。
+        // 但是为了清晰看到长度收缩，同时运动本身不影响长度测量(已经通过变形体现)，这里让动系周期运动或持续移动并循环?
+        // 更优雅: 让动系沿X轴从 -5 到 5 往复运动，并在运动中长度收缩实时可见。速度越大，运动越快同时长度越短。
+        let currentBeta = 0.6;      // 初始速度 0.6c
+        let time = 0;
+        let motionRange = 7.0;       // 运动范围 -3.5 到 3.5，避免跑出视野
+        let motionDirection = 1;
+        let posX = -2.0;
+        
+        // 从滑块获取速度更新
+        const slider = document.getElementById('velocitySlider');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        function setSpeedFromSlider() {
+            const val = parseFloat(slider.value);
+            currentBeta = val;
+            updateMovingLength(currentBeta);
+            // 同时改变运动速度系数 (移动速度表现)
+        }
+        
+        slider.addEventListener('input', () => {
+            setSpeedFromSlider();
+        });
+        resetBtn.addEventListener('click', () => {
+            slider.value = '0.6';
+            setSpeedFromSlider();
+            // 可选重置位置不重置也行
+            posX = -2.0;
+            movingGroup.position.x = posX;
+        });
+        
+        // 初始调用
+        setSpeedFromSlider();
+        
+        // 添加一个额外的视觉指示器：在静系旁边增加一个浮动对比箭头
+        const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(2.2, 0.8, 1.2), 1.2, 0xffaa44, 0.5, 0.3);
+        scene.add(arrowHelper);
+        
+        // 增加说明光带 (沿X轴的一条半透明带状)
+        const axisLinePoints = [];
+        for (let x = -5; x <= 5; x+=0.1) axisLinePoints.push(new THREE.Vector3(x, -0.9, 0));
+        const axisLineGeo = new THREE.BufferGeometry().setFromPoints(axisLinePoints);
+        const axisLineMatGlow = new THREE.LineBasicMaterial({ color: 0x3399ff, transparent: true, opacity: 0.3 });
+        const guideLine = new THREE.Line(axisLineGeo, axisLineMatGlow);
+        scene.add(guideLine);
+        
+        // --- 动系的运动逻辑: 根据当前速度 beta，设置移动速度因子 (为使动画平滑，运动速度与 beta 成正比)---
+        // 这样用户滑动速度条时，动系不仅长度变化，在空间中移动的快慢也相应改变，更符合相对运动直观。
+        let lastTimestamp = 0;
+        let baseSpeed = 1.8;      // 最大速度(beta=0.99)时的运动速度系数 (单位/秒)
+        
+        // 动画循环: 更新动系位置、旋转粒子动画、星星旋转等
+        let lastBetaForMotion = currentBeta;
+        
+        function animateMotion(deltaTime) {
+            if (deltaTime > 0.03) deltaTime = 0.03; // 限制最大步长
+            // 运动速度系数 与 beta 平方相关 (视觉效果明显)
+            const motionSpeedFactor = currentBeta * 2.5;  // beta=0.6 时速度 1.5, beta=0.99时约2.475
+            let step = motionSpeedFactor * deltaTime * 2.2;
+            // 更新位置
+            posX += step * motionDirection;
+            if (posX > motionRange) {
+                posX = motionRange;
+                motionDirection = -1;
+            } else if (posX < -motionRange) {
+                posX = -motionRange;
+                motionDirection = 1;
+            }
+            movingGroup.position.x = posX;
+            
+            // 让粒子整体有流动感: 更新粒子位置沿X方向轻微飘移，模拟相对运动质感
+            const positionsAttr = particleGeometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                let px = positionsAttr[i*3];
+                // 模拟流动效果，粒子沿 X 正向漂移后复位
+                let shift = deltaTime * currentBeta * 1.5;
+                px += shift;
+                const limit = currentMovingLength / 2 + 0.2;
+                if (px > limit) px = -limit;
+                if (px < -limit) px = limit;
+                positionsAttr[i*3] = px;
+                // 轻微随机Y/Z 增加生动性
+                if (Math.random() < 0.02) {
+                    positionsAttr[i*3+1] += (Math.random() - 0.5) * 0.03;
+                    positionsAttr[i*3+2] += (Math.random() - 0.5) * 0.03;
+                    // 限制范围
+                    positionsAttr[i*3+1] = Math.min(0.45, Math.max(-0.3, positionsAttr[i*3+1]));
+                    positionsAttr[i*3+2] = Math.min(0.6, Math.max(-0.6, positionsAttr[i*3+2]));
+                }
+            }
+            particleGeometry.attributes.position.needsUpdate = true;
+            
+            // 让静态组周围的光晕微动
+            const timeSec = performance.now() * 0.002;
+            stars.rotation.y += 0.0005;
+            stars.rotation.x = Math.sin(timeSec * 0.1) * 0.05;
+            
+            // 更新箭头指向和颜色随速度改变
+            const hue = 0.55 + currentBeta * 0.3;
+            arrowHelper.setColor(0xffaa66);
+            if (currentBeta > 0.3) arrowHelper.setLength(1.0 + currentBeta * 1.2);
+            
+            // 动态更新尾部光带位置(只是装饰)
+            trailLine.position.x = movingGroup.position.x;
+        }
+        
+        // 渲染并更新相机控件
+        let lastTime = performance.now();
+        function renderLoop() {
+            const now = performance.now();
+            let delta = Math.min(0.033, (now - lastTime) / 1000);
+            lastTime = now;
+            
+            animateMotion(delta);
+            
+            // 更新轨道控制目标保持视野舒适 (可选：追随动系，但不强制)
+            // 为了让用户自由观察，不强制跟随，但可轻微平滑
+            controls.update(); 
+            
+            // 更新 CSS2D 标签的位置跟随物体 (自动跟随group)
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+            
+            requestAnimationFrame(renderLoop);
+        }
+        
+        // 窗口适配
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // 启动
+        renderLoop();
+        
+        // 小控制台提示
+        console.log('3D相对论长度收缩演示已启动 | 调节滑块改变速度 v/c，观察红色尺子缩短以及运动速度变化');
+        
+        // 额外增加轻微引导淡入效果
+        const infoDiv = document.getElementById('info');
+        infoDiv.style.opacity = '0';
+        setTimeout(() => { infoDiv.style.transition = 'opacity 0.8s'; infoDiv.style.opacity = '1'; }, 200);
+    </script>
+</body>
+</html>
+```
