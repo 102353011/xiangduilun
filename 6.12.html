@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论：运动电偶极子的电磁场 | 动态场线可视化</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 20px; color: white; z-index: 20; pointer-events: none; border-left: 4px solid #ffaa44; max-width: 340px; }
+        #info-panel h1 { margin: 0 0 6px; font-size: 1.2rem; }
+        #calc-panel { position: absolute; top: 20px; right: 20px; width: 290px; background: rgba(10,14,28,0.92); backdrop-filter: blur(12px); border-radius: 16px; padding: 12px; color: #eef; font-size: 12px; border: 1px solid rgba(255,200,100,0.4); z-index: 20; pointer-events: auto; }
+        #calc-panel h3 { margin: 0 0 10px; color: #ffcc88; text-align: center; }
+        .calc-step { border-left: 3px solid #ffaa66; padding-left: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.2); border-radius: 0 8px 8px 0; }
+        .result-value { font-size: 0.9rem; color: #ffdd99; font-weight: bold; text-align: center; background: #00000066; padding: 6px; border-radius: 10px; margin-top: 8px; }
+        #control-bar { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(20,24,45,0.94); backdrop-filter: blur(14px); border-radius: 40px; padding: 10px 20px; display: flex; gap: 20px; justify-content: center; z-index: 25; pointer-events: auto; }
+        .ctrl-group { background: rgba(0,0,0,0.6); border-radius: 40px; padding: 5px 18px; text-align: center; }
+        .ctrl-group label { font-size: 11px; color: #ccc; display: block; }
+        input { width: 140px; cursor: pointer; accent-color: #ffaa44; }
+        .value { color: #ffaa66; font-weight: bold; }
+        button { background: #2c5a7a; border: none; padding: 6px 18px; border-radius: 40px; color: white; cursor: pointer; }
+        @media (max-width: 700px) { #calc-panel { width: 260px; } .ctrl-group { padding: 3px 10px; } input { width: 110px; } }
+    </style>
+</head>
+<body>
+<div id="info-panel">
+    <h1>⚡ 运动电偶极子的电磁场</h1>
+    <p>电偶极子 p₀ 以速度 v 沿 x 轴匀速运动。电磁势：φ = γ·(p₀·R)/(4πε₀ R³)，A = v/c²·φ<br>
+    电场：E∥ = E'∥，E⊥ = γ E'⊥；磁场：B = (v/c²) × E</p>
+</div>
+<div id="calc-panel">
+    <h3>📐 场变换公式</h3>
+    <div class="calc-step">❶ 偶极子静止系中：φ' = (p₀·r')/(4πε₀ r'³)，A' = 0</div>
+    <div class="calc-step">❷ 洛伦兹变换到实验室系：<br> φ = γ φ'，A = (v/c²) φ</div>
+    <div class="calc-step">❸ 电场：E∥ = E'∥，E⊥ = γ E'⊥<br> 磁场：B = (v/c²) × E</div>
+    <div class="result-value" id="field-info">β = 0.50 | 电场增强因子 γ = 1.155</div>
+</div>
+<div id="control-bar">
+    <div class="ctrl-group"><label>速度 β = v/c</label><input type="range" id="vSlider" min="0" max="0.95" step="0.01" value="0.5"><span id="betaVal" class="value">0.50</span></div>
+    <div class="ctrl-group"><label>偶极矩方向</label><select id="dipoleDir" style="background:#2c5a7a;color:white;border-radius:20px;padding:4px;"><option value="x">沿 x 轴</option><option value="y" selected>沿 y 轴</option><option value="z">沿 z 轴</option></select></div>
+    <button id="resetView">重置相机</button>
+</div>
+
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050b1a);
+    scene.fog = new THREE.FogExp2(0x050b1a, 0.006);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(4, 3, 6);
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+    
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+    document.getElementById('resetView').addEventListener('click', () => { camera.position.set(4, 3, 6); controls.target.set(0, 0, 0); controls.update(); });
+    
+    // 辅助元素
+    const grid = new THREE.GridHelper(8, 20, 0x77aaff, 0x335588);
+    grid.position.y = -1.2;
+    scene.add(grid);
+    const axes = new THREE.AxesHelper(5);
+    axes.material.transparent = true;
+    axes.material.opacity = 0.2;
+    scene.add(axes);
+    // 星空
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(1000 * 3);
+    for (let i=0; i<1000; i++) { starPos[i*3]=(Math.random()-0.5)*200; starPos[i*3+1]=(Math.random()-0.5)*100; starPos[i*3+2]=(Math.random()-0.5)*100-50; }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08 }));
+    scene.add(stars);
+    
+    // 电偶极子模型：两个小球 + 连线
+    let dipoleGroup, posCharge, negCharge, dipoleLine;
+    let fieldLines = [];
+    let beta = 0.5;
+    let dipoleDir = 'y';
+    
+    function createDipole() {
+        if (dipoleGroup) scene.remove(dipoleGroup);
+        dipoleGroup = new THREE.Group();
+        const posMat = new THREE.MeshStandardMaterial({ color: 0xff6666, emissive: 0x441111 });
+        const negMat = new THREE.MeshStandardMaterial({ color: 0x66aaff, emissive: 0x114466 });
+        const sphereGeo = new THREE.SphereGeometry(0.12, 32, 32);
+        posCharge = new THREE.Mesh(sphereGeo, posMat);
+        negCharge = new THREE.Mesh(sphereGeo, negMat);
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xffaa66 });
+        const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
+        dipoleLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), lineMat);
+        dipoleGroup.add(posCharge);
+        dipoleGroup.add(negCharge);
+        dipoleGroup.add(dipoleLine);
+        scene.add(dipoleGroup);
+        updateDipoleOrientation();
+    }
+    
+    function updateDipoleOrientation() {
+        const dir = dipoleDir;
+        const len = 0.6;
+        let p1, p2;
+        if (dir === 'x') { p1 = new THREE.Vector3(len/2, 0, 0); p2 = new THREE.Vector3(-len/2, 0, 0); }
+        else if (dir === 'y') { p1 = new THREE.Vector3(0, len/2, 0); p2 = new THREE.Vector3(0, -len/2, 0); }
+        else { p1 = new THREE.Vector3(0, 0, len/2); p2 = new THREE.Vector3(0, 0, -len/2); }
+        posCharge.position.copy(p1);
+        negCharge.position.copy(p2);
+        const points = [p2, p1];
+        dipoleLine.geometry.dispose();
+        dipoleLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+    }
+    
+    // 创建电场线 (示意)
+    function createFieldLines() {
+        fieldLines.forEach(line => scene.remove(line));
+        fieldLines = [];
+        const gamma = 1 / Math.sqrt(1 - beta * beta);
+        const dir = dipoleDir;
+        // 根据偶极子方向绘制流线 (简化: 绘制从正电荷出发到负电荷的曲线，并展示横向收缩)
+        const colors = [0xff8888, 0xffaa66, 0xffaa66];
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const points = [];
+            for (let t = 0; t <= 1; t += 0.05) {
+                let x = 0, y = 0, z = 0;
+                if (dir === 'y') {
+                    const rad = angle;
+                    const r = 1.2 * t;
+                    x = Math.cos(rad) * r * (1 + (gamma-1)*0.5); // 横向拉伸
+                    y = (t - 0.5) * 1.5;
+                    z = Math.sin(rad) * r;
+                } else if (dir === 'x') {
+                    const rad = angle;
+                    const r = 1.2 * t;
+                    x = (t - 0.5) * 1.5;
+                    y = Math.cos(rad) * r;
+                    z = Math.sin(rad) * r;
+                } else {
+                    const rad = angle;
+                    const r = 1.2 * t;
+                    x = Math.cos(rad) * r;
+                    y = Math.sin(rad) * r;
+                    z = (t - 0.5) * 1.5;
+                }
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: colors[i%colors.length], transparent: true, opacity: 0.5 });
+            const lineObj = new THREE.Line(geo, material);
+            scene.add(lineObj);
+            fieldLines.push(lineObj);
+        }
+    }
+    
+    // 更新相对论效应 (场线收缩)
+    function updateRelativisticEffect() {
+        beta = parseFloat(document.getElementById('vSlider').value);
+        const gamma = 1 / Math.sqrt(1 - beta * beta);
+        document.getElementById('betaVal').innerText = beta.toFixed(2);
+        document.getElementById('field-info').innerHTML = `β = ${beta.toFixed(2)} | 横向电场增强因子 γ = ${gamma.toFixed(3)}`;
+        createFieldLines(); // 重新生成体现收缩的场线
+    }
+    
+    // 运动动画: 偶极子整体沿 x 轴移动
+    let dipolePosX = 0;
+    let moveDir = 1;
+    function animateMotion() {
+        const speed = beta * 1.5;
+        dipolePosX += speed * 0.016;
+        if (dipolePosX > 2.5) dipolePosX = -2.5;
+        if (dipolePosX < -2.5) dipolePosX = 2.5;
+        if (dipoleGroup) dipoleGroup.position.set(dipolePosX, 0, 0);
+    }
+    
+    // 添加一些粒子代表电磁场
+    let fieldParticles = [];
+    function createFieldParticles() {
+        for (let i = 0; i < 200; i++) {
+            const geo = new THREE.SphereGeometry(0.03, 6, 6);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x88aaff, emissive: 0x2288aa, transparent: true, opacity: 0.6 });
+            const particle = new THREE.Mesh(geo, mat);
+            particle.userData = { angle: Math.random() * Math.PI * 2, radius: 0.5 + Math.random() * 1.5, speed: 0.5 + Math.random() };
+            scene.add(particle);
+            fieldParticles.push(particle);
+        }
+    }
+    
+    function updateParticles() {
+        const gamma = 1 / Math.sqrt(1 - beta * beta);
+        const dir = dipoleDir;
+        fieldParticles.forEach(p => {
+            const angle = p.userData.angle;
+            const r = p.userData.radius;
+            let x = 0, y = 0, z = 0;
+            if (dir === 'y') {
+                x = Math.cos(angle) * r * (1 + (gamma-1)*0.7);
+                y = (Math.sin(angle) * 0.8);
+                z = Math.sin(angle) * r * 0.8;
+            } else if (dir === 'x') {
+                x = (Math.sin(angle) * 0.8);
+                y = Math.cos(angle) * r;
+                z = Math.sin(angle) * r;
+            } else {
+                x = Math.cos(angle) * r;
+                y = Math.sin(angle) * r;
+                z = (Math.sin(angle) * 0.8);
+            }
+            p.position.set(x + dipolePosX, y, z);
+            p.userData.angle += 0.02 * p.userData.speed;
+        });
+    }
+    
+    // 光照
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(2, 3, 4);
+    scene.add(light);
+    const backLight = new THREE.PointLight(0x4466cc, 0.3);
+    backLight.position.set(-1, 1, -2);
+    scene.add(backLight);
+    
+    const vSlider = document.getElementById('vSlider');
+    const dirSelect = document.getElementById('dipoleDir');
+    vSlider.addEventListener('input', () => { updateRelativisticEffect(); });
+    dirSelect.addEventListener('change', (e) => { dipoleDir = e.target.value; updateDipoleOrientation(); updateRelativisticEffect(); });
+    
+    createDipole();
+    createFieldLines();
+    createFieldParticles();
+    updateRelativisticEffect();
+    
+    let lastTime = performance.now();
+    function animate() {
+        const now = performance.now();
+        let delta = Math.min(0.033, (now - lastTime) / 1000);
+        lastTime = now;
+        animateMotion();
+        updateParticles();
+        stars.rotation.y += 0.002;
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    animate();
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); labelRenderer.setSize(window.innerWidth, window.innerHeight); });
+</script>
+</body>
+</html>

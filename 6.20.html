@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论：动量中心系 | 对撞机能量估计</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', monospace; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 20px; color: white; z-index: 20; pointer-events: none; border-left: 4px solid #ffaa44; max-width: 360px; }
+        #info-panel h1 { margin: 0 0 6px; font-size: 1rem; }
+        .formula { font-family: monospace; background: #00000066; padding: 3px 6px; border-radius: 6px; margin-top: 5px; font-size: 0.7rem; color: #ffdd99; }
+        #calc-panel { position: absolute; top: 20px; right: 20px; width: 300px; background: rgba(10,14,28,0.92); backdrop-filter: blur(12px); border-radius: 16px; padding: 12px; color: #eef; font-size: 11px; border: 1px solid rgba(255,200,100,0.4); z-index: 20; pointer-events: auto; }
+        .result-value { background: #00000066; padding: 8px; border-radius: 10px; text-align: center; margin-top: 8px; }
+        #control-bar { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(20,24,45,0.94); backdrop-filter: blur(14px); border-radius: 40px; padding: 8px 16px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; z-index: 25; }
+        .ctrl-group { background: rgba(0,0,0,0.6); border-radius: 40px; padding: 3px 12px; text-align: center; }
+        input { width: 100px; accent-color: #ffaa44; }
+        button { background: #2c5a7a; border: none; padding: 4px 12px; border-radius: 40px; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div id="info-panel"><h1>💥 动量中心系 | 对撞机能量估计</h1><p>粒子 m₁ (能量 E₁) 射向静止粒子 m₂。求动量中心速度、各粒子动量能量，以及单束电子入射所需能量。</p><div class="formula">β_c = √(E₁²-m₁²c⁴)/(E₁+m₂c²) | E_bepc ≈ 2E'²/(m_e c²) ≈ 1.9×10⁴ GeV</div></div>
+<div id="calc-panel"><h3>📐 计算结果</h3><div>动量中心速度 β_c = <span id="betaC">0.00</span></div><div>质心系总能量 √s = <span id="sqrtS">0.00</span> GeV</div><div>单束电子所需能量 E_lab = <span id="Elab">0.00</span> GeV</div><div class="result-value">BEPC对撞能量 2×2.2GeV ≈ 固定靶需 <span id="targetEnergy">0.00</span> GeV</div></div>
+<div id="control-bar"><div class="ctrl-group"><label>m₁ (MeV/c²)</label><input type="range" id="m1" min="0.5" max="1000" step="10" value="0.511"><span id="m1Val">0.511</span></div>
+<div class="ctrl-group"><label>E₁ (MeV)</label><input type="range" id="E1" min="100" max="50000" step="100" value="2200"><span id="E1Val">2200</span></div>
+<div class="ctrl-group"><label>m₂ (MeV/c²)</label><input type="range" id="m2" min="0.5" max="1000" step="10" value="0.511"><span id="m2Val">0.511</span></div>
+<button id="resetView">重置相机</button></div>
+
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x050b1a);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(6,4,10);
+const renderer=new THREE.WebGLRenderer(); renderer.setSize(window.innerWidth,window.innerHeight); document.body.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true;
+document.getElementById('resetView').addEventListener('click',()=>{camera.position.set(6,4,10); controls.target.set(0,0,0); controls.update();});
+const grid=new THREE.GridHelper(10,20,0x77aaff,0x335588); grid.position.y=-1.2; scene.add(grid);
+const axes=new THREE.AxesHelper(6); axes.material.transparent=true; axes.material.opacity=0.2; scene.add(axes);
+const ambient=new THREE.AmbientLight(0x404060); scene.add(ambient);
+const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(2,3,4); scene.add(light);
+let sphere1, sphere2, arrow1;
+function update(){
+    const m1=parseFloat(document.getElementById('m1').value); const E1=parseFloat(document.getElementById('E1').value);
+    const m2=parseFloat(document.getElementById('m2').value);
+    document.getElementById('m1Val').innerText=m1; document.getElementById('E1Val').innerText=E1; document.getElementById('m2Val').innerText=m2;
+    const p1=Math.sqrt(E1*E1-m1*m1); const betaC=p1/(E1+m2);
+    const sqrtS=Math.sqrt(m1*m1+m2*m2+2*E1*m2);
+    const ElabFixed=(sqrtS*sqrtS-m1*m1-m2*m2)/(2*m2);
+    const bepcEnergy=2*2.2*1000; const sqrtS_bepc=2*2.2*1000;
+    const targetEq=bepcEnergy*bepcEnergy/(2*0.511); 
+    document.getElementById('betaC').innerText=betaC.toFixed(5);
+    document.getElementById('sqrtS').innerText=sqrtS.toFixed(2);
+    document.getElementById('Elab').innerText=ElabFixed.toFixed(0);
+    document.getElementById('targetEnergy').innerText=(targetEq/1000).toFixed(1)+" GeV";
+    if(sphere1) scene.remove(sphere1); if(sphere2) scene.remove(sphere2); if(arrow1) scene.remove(arrow1);
+    sphere1=new THREE.Mesh(new THREE.SphereGeometry(0.35,32,32),new THREE.MeshStandardMaterial({color:0xff6666}));
+    sphere1.position.set(-2,0,0); scene.add(sphere1);
+    sphere2=new THREE.Mesh(new THREE.SphereGeometry(0.35,32,32),new THREE.MeshStandardMaterial({color:0x66ff66}));
+    sphere2.position.set(2,0,0); scene.add(sphere2);
+    arrow1=new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0.5,0), p1/500, 0xff8888, 0.5, 0.3);
+    scene.add(arrow1);
+}
+document.getElementById('m1').addEventListener('input',update); document.getElementById('E1').addEventListener('input',update); document.getElementById('m2').addEventListener('input',update);
+update();
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+animate();
+</script>
+</body>
+</html>

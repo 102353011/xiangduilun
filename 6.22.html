@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论：垂直电磁场中的粒子运动 (E > cB)</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', monospace; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 20px; color: white; z-index: 20; pointer-events: none; border-left: 4px solid #ffaa44; max-width: 360px; }
+        #info-panel h1 { margin: 0 0 6px; font-size: 1rem; }
+        .formula { font-family: monospace; background: #00000066; padding: 3px 6px; border-radius: 6px; margin-top: 5px; font-size: 0.7rem; color: #ffdd99; }
+        #calc-panel { position: absolute; top: 20px; right: 20px; width: 300px; background: rgba(10,14,28,0.92); backdrop-filter: blur(12px); border-radius: 16px; padding: 12px; color: #eef; font-size: 11px; border: 1px solid rgba(255,200,100,0.4); z-index: 20; pointer-events: auto; }
+        .result-value { background: #00000066; padding: 8px; border-radius: 10px; text-align: center; margin-top: 8px; }
+        #control-bar { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(20,24,45,0.94); backdrop-filter: blur(14px); border-radius: 40px; padding: 8px 16px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; z-index: 25; }
+        .ctrl-group { background: rgba(0,0,0,0.6); border-radius: 40px; padding: 3px 12px; text-align: center; }
+        input { width: 100px; accent-color: #ffaa44; }
+        button { background: #2c5a7a; border: none; padding: 4px 12px; border-radius: 40px; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div id="info-panel"><h1>🌀 垂直电磁场中的粒子运动 (E > cB)</h1><p>电场 E e_x，磁场 B e_y，粒子初速为零。存在漂移速度 u = c²B/E。</p><div class="formula">z = (m₀c²γ_u/eE)[√(1+(eEt/(m₀cγ_u²))²)-1] | γ_u = 1/√(1-u²/c²)</div></div>
+<div id="calc-panel"><h3>📐 计算结果</h3><div>漂移速度 u = <span id="uVal">0.00</span> c</div><div>γ_u = <span id="gammaU">0.00</span></div><div>位移 z = <span id="zVal">0.00</span> m</div><div class="result-value">条件: E/cB = <span id="ratioVal">0.00</span> (需 >1)</div></div>
+<div id="control-bar"><div class="ctrl-group"><label>电场 E (MV/m)</label><input type="range" id="E" min="50" max="500" step="10" value="200"><span id="EVal">200</span></div>
+<div class="ctrl-group"><label>磁场 B (T)</label><input type="range" id="B" min="0.1" max="2" step="0.01" value="0.5"><span id="BVal">0.50</span></div>
+<div class="ctrl-group"><label>时间 t (ns)</label><input type="range" id="t" min="0" max="100" step="5" value="30"><span id="tVal">30</span></div>
+<button id="resetView">重置相机</button></div>
+
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; 
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050b1a);
+scene.fog = new THREE.FogExp2(0x050b1a, 0.008);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(8, 6, 12);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.left = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 0, 0);
+document.getElementById('resetView').addEventListener('click', () => {
+    camera.position.set(8, 6, 12);
+    controls.target.set(0, 0, 0);
+    controls.update();
+});
+
+// 辅助元素
+const grid = new THREE.GridHelper(14, 28, 0x77aaff, 0x335588);
+grid.position.y = -1.5;
+scene.add(grid);
+const axes = new THREE.AxesHelper(7);
+axes.material.transparent = true;
+axes.material.opacity = 0.2;
+scene.add(axes);
+
+// 星空
+const starGeo = new THREE.BufferGeometry();
+const starPos = new Float32Array(1000 * 3);
+for (let i = 0; i < 1000; i++) {
+    starPos[i*3] = (Math.random() - 0.5) * 200;
+    starPos[i*3+1] = (Math.random() - 0.5) * 100;
+    starPos[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08 }));
+scene.add(stars);
+
+// 光照
+const ambient = new THREE.AmbientLight(0x404060);
+scene.add(ambient);
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(3, 5, 2);
+scene.add(light);
+const backLight = new THREE.PointLight(0x4466cc, 0.3);
+backLight.position.set(-2, 1, -3);
+scene.add(backLight);
+
+// 可视化元素
+let particle, eArrow, bArrow, trailLine;
+let trailPoints = [];
+
+// 电场箭头 (沿X轴)
+eArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-3, 1.5, 0), 2, 0xff6666, 0.7, 0.5);
+scene.add(eArrow);
+// 磁场箭头 (沿Y轴)
+bArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-3, -0.5, 0), 1.5, 0x66ff66, 0.7, 0.5);
+scene.add(bArrow);
+
+// 标签
+const eLabelDiv = document.createElement('div');
+eLabelDiv.textContent = '电场 E →';
+eLabelDiv.style.color = '#ff8888';
+eLabelDiv.style.fontSize = '10px';
+const eLabel = new CSS2DObject(eLabelDiv);
+eLabel.position.set(-3, 2.2, 0);
+scene.add(eLabel);
+
+const bLabelDiv = document.createElement('div');
+bLabelDiv.textContent = '磁场 B ↑';
+bLabelDiv.style.color = '#88ff88';
+bLabelDiv.style.fontSize = '10px';
+const bLabel = new CSS2DObject(bLabelDiv);
+bLabel.position.set(-3, -1.2, 0);
+scene.add(bLabel);
+
+function update() {
+    const E_MV = parseFloat(document.getElementById('E').value);
+    const B = parseFloat(document.getElementById('B').value);
+    const t_ns = parseFloat(document.getElementById('t').value);
+    document.getElementById('EVal').innerText = E_MV;
+    document.getElementById('BVal').innerText = B;
+    document.getElementById('tVal').innerText = t_ns;
+    
+    const E = E_MV * 1e6;
+    const t = t_ns * 1e-9;
+    const m0 = 9.11e-31;
+    const e = 1.6e-19;
+    const c = 3e8;
+    
+    const u = c * c * B / E;
+    const betaU = u / c;
+    const gammaU = 1 / Math.sqrt(1 - betaU * betaU);
+    const ratio = E / (c * B);
+    
+    document.getElementById('uVal').innerText = betaU.toFixed(4);
+    document.getElementById('gammaU').innerText = gammaU.toFixed(3);
+    document.getElementById('ratioVal').innerText = ratio.toFixed(2);
+    
+    let z = 0;
+    if (ratio > 1) {
+        z = (m0 * c * c * gammaU / (e * E)) * (Math.sqrt(1 + (e * E * t / (m0 * c * gammaU * gammaU)) ** 2) - 1);
+    }
+    document.getElementById('zVal').innerText = z.toExponential(3);
+    
+    // 更新粒子位置
+    const displayZ = Math.min(z / 3, 4);
+    if (particle) scene.remove(particle);
+    particle = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 32, 32),
+        new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0x442200 })
+    );
+    particle.position.set(0, 0, displayZ);
+    scene.add(particle);
+    
+    // 轨迹
+    trailPoints.push(new THREE.Vector3(0, 0, displayZ));
+    if (trailPoints.length > 80) trailPoints.shift();
+    if (trailLine) scene.remove(trailLine);
+    const points = trailPoints.map(p => p.clone());
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    trailLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x66ccff }));
+    scene.add(trailLine);
+}
+
+document.getElementById('E').addEventListener('input', update);
+document.getElementById('B').addEventListener('input', update);
+document.getElementById('t').addEventListener('input', update);
+
+update();
+
+function animate() {
+    stars.rotation.y += 0.001;
+    controls.update();
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+    requestAnimationFrame(animate);
+}
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

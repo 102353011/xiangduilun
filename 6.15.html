@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>相对论：螺旋磁场变换为圆偏振电磁波</title><style>body{margin:0;overflow:hidden;font-family:monospace}#info{position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#fff;z-index:20}#calc{position:absolute;top:20px;right:20px;width:280px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#ffdd99;z-index:20}#control{position:absolute;bottom:20px;left:20px;right:20px;background:rgba(0,0,0,0.7);border-radius:40px;padding:10px;display:flex;gap:20px;justify-content:center;z-index:20}</style></head>
+<body>
+<div id="info"><h1>🌀 螺旋静磁场 → 圆偏振电磁波</h1><p>静磁场 B = B₀(cos kₘz e_x + sin kₘz e_y)，沿z轴以速度v运动的惯性系中观察到电磁波</p></div>
+<div id="calc"><h3>📐 变换结果</h3><div>当 β → 1 时，场变为圆偏振电磁波</div><div>频率 ω = γ β c kₘ</div><div id="freqDisplay">ω/ω₀ = <span id="freqVal">0.00</span></div></div>
+<div id="control"><div><label>速度 β = v/c </label><input type="range" id="beta" min="0" max="0.99" step="0.01" value="0.8"><span id="betaVal">0.80</span></div><button id="reset">重置相机</button></div>
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x050b1a);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(8,5,12);
+const renderer=new THREE.WebGLRenderer(); renderer.setSize(window.innerWidth,window.innerHeight); document.body.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true;
+document.getElementById('reset').addEventListener('click',()=>{camera.position.set(8,5,12); controls.target.set(0,0,0); controls.update();});
+const grid=new THREE.GridHelper(12,24,0x77aaff,0x335588); grid.position.y=-1; scene.add(grid);
+const axes=new THREE.AxesHelper(6); axes.material.transparent=true; axes.material.opacity=0.2; scene.add(axes);
+const ambient=new THREE.AmbientLight(0x404060); scene.add(ambient);
+const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(2,3,4); scene.add(light);
+let beta=0.8; let arrowGroup;
+function updateField(){
+    if(arrowGroup) scene.remove(arrowGroup);
+    arrowGroup=new THREE.Group();
+    const gamma=1/Math.sqrt(1-beta*beta);
+    const km=2; const B0=0.8;
+    document.getElementById('betaVal').innerText=beta.toFixed(2);
+    const freqRel=gamma*beta*km; document.getElementById('freqVal').innerText=freqRel.toFixed(3);
+    for(let z=-3; z<=3; z+=0.4){
+        const angle=km*z;
+        const Bx=B0*Math.cos(angle); const By=B0*Math.sin(angle);
+        const arrow=new THREE.ArrowHelper(new THREE.Vector3(Bx,By,0).normalize(), new THREE.Vector3(0,0,z), 0.6, 0x66ff66, 0.4, 0.3);
+        arrowGroup.add(arrow);
+        const Ex=-By*beta*gamma; const Ey=Bx*beta*gamma;
+        if(beta>0.7){
+            const eArrow=new THREE.ArrowHelper(new THREE.Vector3(Ex,Ey,0).normalize(), new THREE.Vector3(1.2,0,z), 0.5, 0xff6666, 0.4, 0.3);
+            arrowGroup.add(eArrow);
+        }
+    }
+    scene.add(arrowGroup);
+}
+const slider=document.getElementById('beta'); slider.addEventListener('input',()=>{beta=parseFloat(slider.value); updateField();});
+updateField();
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+animate();
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight);});
+</script>
+</body>
+</html>

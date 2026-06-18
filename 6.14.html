@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>相对论：运动点电荷的电场压缩</title><style>body{margin:0;overflow:hidden;font-family:monospace}#info{position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#fff;z-index:20}#calc{position:absolute;top:20px;right:20px;width:260px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#ffdd99;z-index:20}#control{position:absolute;bottom:20px;left:20px;right:20px;background:rgba(0,0,0,0.7);border-radius:40px;padding:10px;display:flex;gap:20px;justify-content:center;z-index:20}</style></head>
+<body>
+<div id="info"><h1>⚡ 运动点电荷的电场压缩</h1><p>电荷运动方向上的电场减弱，垂直方向增强 | E∥ = E'∥，E⊥ = γE'⊥</p></div>
+<div id="calc"><h3>📐 场变换</h3><div>静止系中库仑场 E' = q/(4πε₀r²)</div><div>运动方向压缩因子 γ = <span id="gammaVal">1.15</span></div><div>横向电场增强 γ 倍</div><div id="formula">E⊥/E'⊥ = γ</div></div>
+<div id="control"><div><label>速度 β = v/c </label><input type="range" id="beta" min="0" max="0.95" step="0.01" value="0.6"><span id="betaVal">0.60</span></div><button id="reset">重置相机</button></div>
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x050b1a);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(5,4,7);
+const renderer=new THREE.WebGLRenderer(); renderer.setSize(window.innerWidth,window.innerHeight); document.body.appendChild(renderer.domElement);
+const labelRenderer=new CSS2DRenderer(); labelRenderer.setSize(window.innerWidth,window.innerHeight); labelRenderer.domElement.style.position='absolute'; labelRenderer.domElement.style.top='0px'; labelRenderer.domElement.style.left='0px'; document.body.appendChild(labelRenderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; document.getElementById('reset').addEventListener('click',()=>{camera.position.set(5,4,7); controls.target.set(0,0,0); controls.update();});
+const grid=new THREE.GridHelper(8,20,0x77aaff,0x335588); grid.position.y=-1; scene.add(grid);
+const axes=new THREE.AxesHelper(5); axes.material.transparent=true; axes.material.opacity=0.2; scene.add(axes);
+const ambient=new THREE.AmbientLight(0x404060); scene.add(ambient);
+const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(2,3,4); scene.add(light);
+let charge, fieldLines=[], beta=0.6;
+function updateCharge(){
+    if(charge) scene.remove(charge);
+    const geometry=new THREE.SphereGeometry(0.3,32,32);
+    const material=new THREE.MeshStandardMaterial({color:0xff6666,emissive:0x441111});
+    charge=new THREE.Mesh(geometry,material); charge.position.set(0,0,0); scene.add(charge);
+    const gamma=1/Math.sqrt(1-beta*beta);
+    document.getElementById('gammaVal').innerText=gamma.toFixed(3);
+    document.getElementById('betaVal').innerText=beta.toFixed(2);
+    fieldLines.forEach(l=>scene.remove(l)); fieldLines=[];
+    for(let i=0;i<24;i++){
+        const angle=(i/24)*Math.PI*2;
+        const points=[];
+        for(let t=0;t<=1;t+=0.03){
+            let r=1.5*t;
+            let x=r*Math.cos(angle);
+            let y=r*Math.sin(angle);
+            let z=0;
+            if(Math.abs(y)<0.3 && x<0) continue;
+            points.push(new THREE.Vector3(x,y,z));
+        }
+        const geo=new THREE.BufferGeometry().setFromPoints(points);
+        const mat=new THREE.LineBasicMaterial({color:0xffaa66,transparent:true,opacity:0.5});
+        const line=new THREE.Line(geo,mat);
+        scene.add(line); fieldLines.push(line);
+    }
+}
+const slider=document.getElementById('beta'); slider.addEventListener('input',()=>{beta=parseFloat(slider.value); updateCharge();});
+updateCharge();
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); labelRenderer.render(scene,camera); }
+animate();
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); labelRenderer.setSize(window.innerWidth,window.innerHeight);});
+</script>
+</body>
+</html>

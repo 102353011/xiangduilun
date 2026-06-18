@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>相对论时空模拟器 - 完整演算版</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background-color: #000; color: white; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+
+        /* 底部控制台样式 - 重新设计 */
+        #ui-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1000px;
+            background: rgba(10, 15, 30, 0.9);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid #333;
+            display: flex;
+            gap: 30px;
+            z-index: 10;
+        }
+
+        /* 左侧：参数控制 */
+        .control-group { flex: 1; }
+        label { display: block; font-size: 14px; margin-bottom: 8px; color: #aaa; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #00aaff; }
+        .value-display { float: right; color: #00d2ff; font-weight: bold; }
+
+        /* 右侧：完整计算过程 */
+        #data-display {
+            flex: 2;
+            background: rgba(0,0,0,0.4);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.8;
+            border-left: 3px solid #00d2ff;
+            font-family: 'Courier New', monospace; /* 等宽字体，更有代码/计算感 */
+        }
+        
+        .calc-title { color: #00d2ff; font-weight: bold; margin-bottom: 5px; font-family: 'Segoe UI', sans-serif;}
+        .math-step { color: #ccc; }
+        .math-highlight { color: #ffcc00; font-weight: bold; }
+        .math-result { color: #00ff88; font-weight: bold; font-size: 15px; margin-top: 5px; display: inline-block; background: rgba(0,255,136,0.1); padding: 2px 8px; border-radius: 4px;}
+
+        /* 顶部提示 */
+        #hint {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            pointer-events: none;
+        }
+    </style>
+    <!-- 引入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+<div id="hint">鼠标拖动旋转视角 | 滚轮缩放 | 列车经过中心时自动触发脉冲并展示完整计算过程</div>
+
+<!-- 底部控制台 -->
+<div id="ui-panel">
+    <div class="control-group">
+        <label>列车速度 (v): <span id="val-v" class="value-display">0.5c</span></label>
+        <input type="range" id="slider-v" min="0.1" max="0.9" step="0.01" value="0.5">
+    </div>
+
+    <div class="control-group">
+        <label>铁塔距离 (L₀): <span id="val-l" class="value-display">300 m</span></label>
+        <input type="range" id="slider-l" min="100" max="800" step="50" value="300">
+    </div>
+
+    <!-- 完整计算展示区 -->
+    <div id="data-display">
+        <div class="calc-title">📝 实时演算：列车参考系时间差</div>
+        <div id="calc-steps">
+            <div class="math-step">等待列车经过原点...</div>
+        </div>
+    </div>
+</div>
+
+<div id="canvas-container"></div>
+
+<script>
+    // --- 物理常量与状态 ---
+    const C_REAL = 3e8; // 真实光速 (m/s)
+    let v_ratio = 0.5;
+    let L0 = 300;
+    let isFlashing = false;
+    let flashTimer = 0;
+    let hasTriggered = false;
+
+    // --- Three.js 初始化 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050510);
+    scene.fog = new THREE.FogExp2(0x050510, 0.0015);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
+    camera.position.set(0, 250, 600);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // --- 场景物体构建 ---
+    const gridHelper = new THREE.GridHelper(3000, 100, 0x222222, 0x111111);
+    scene.add(gridHelper);
+
+    // 中心建筑物
+    const buildingGroup = new THREE.Group();
+    const buildGeo = new THREE.BoxGeometry(30, 120, 30);
+    const buildMat = new THREE.MeshPhongMaterial({ color: 0x8888aa });
+    const building = new THREE.Mesh(buildGeo, buildMat);
+    building.position.y = 60;
+    buildingGroup.add(building);
+    scene.add(buildingGroup);
+
+    // 触发线
+    const triggerLineGeo = new THREE.PlaneGeometry(1000, 5);
+    const triggerLineMat = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0, side: THREE.DoubleSide });
+    const triggerLine = new THREE.Mesh(triggerLineGeo, triggerLineMat);
+    triggerLine.rotation.x = -Math.PI / 2;
+    triggerLine.position.y = 2;
+    scene.add(triggerLine);
+
+    // 铁塔函数
+    function createTower(xPos) {
+        const group = new THREE.Group();
+        const geo = new THREE.CylinderGeometry(3, 12, 80, 4);
+        const mat = new THREE.MeshPhongMaterial({ color: 0x555555 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.y = 40;
+        group.add(mesh);
+        
+        const lightGeo = new THREE.SphereGeometry(6);
+        const lightMat = new THREE.MeshBasicMaterial({ color: 0x330000 });
+        const lightMesh = new THREE.Mesh(lightGeo, lightMat);
+        lightMesh.position.y = 85;
+        lightMesh.name = "bulb";
+        group.add(lightMesh);
+
+        group.position.set(xPos, 0, 0);
+        scene.add(group);
+        return group;
+    }
+
+    let towerLeft = createTower(-L0);
+    let towerRight = createTower(L0);
+
+    // 列车
+    const trainGroup = new THREE.Group();
+    const trainBodyGeo = new THREE.BoxGeometry(120, 30, 25);
+    const trainBodyMat = new THREE.MeshPhongMaterial({ color: 0x00aaff });
+    const trainBody = new THREE.Mesh(trainBodyGeo, trainBodyMat);
+    trainBody.position.y = 15;
+    trainGroup.add(trainBody);
+    scene.add(trainGroup);
+
+    // 光波
+    const lightWaveGeo = new THREE.SphereGeometry(1, 32, 32);
+    const lightWaveMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.4, wireframe: true });
+    const lightWave = new THREE.Mesh(lightWaveGeo, lightWaveMat);
+    lightWave.visible = false;
+    scene.add(lightWave);
+
+    // 灯光
+    scene.add(new THREE.AmbientLight(0x404040));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(200, 400, 200);
+    scene.add(dirLight);
+
+    // --- 逻辑控制 ---
+    const sliderV = document.getElementById('slider-v');
+    const sliderL = document.getElementById('slider-l');
+
+    function updateParams() {
+        v_ratio = parseFloat(sliderV.value);
+        L0 = parseFloat(sliderL.value);
+
+        document.getElementById('val-v').innerText = v_ratio.toFixed(2) + "c";
+        document.getElementById('val-l').innerText = L0 + " m";
+
+        towerLeft.position.x = -L0;
+        towerRight.position.x = L0;
+        
+        resetFlash();
+    }
+
+    sliderV.addEventListener('input', updateParams);
+    sliderL.addEventListener('input', updateParams);
+
+    function resetFlash() {
+        isFlashing = false;
+        flashTimer = 0;
+        hasTriggered = false;
+        lightWave.visible = false;
+        triggerLineMat.opacity = 0;
+        
+        towerLeft.getObjectByName("bulb").material.color.setHex(0x330000);
+        towerRight.getObjectByName("bulb").material.color.setHex(0x330000);
+        
+        document.getElementById('calc-steps').innerHTML = `<div class="math-step">等待列车经过原点...</div>`;
+    }
+
+    function triggerAutoFlash() {
+        if(isFlashing || hasTriggered) return;
+        
+        isFlashing = true;
+        hasTriggered = true;
+        flashTimer = 0;
+        
+        // 显示光波
+        lightWave.visible = true;
+        lightWave.scale.set(1,1,1);
+        lightWave.position.set(0, 60, 0);
+
+        // 触发线闪烁
+        triggerLineMat.opacity = 0.8;
+
+        // ===== 完整物理计算过程 =====
+        const v = v_ratio * C_REAL;
+        const gamma = 1 / Math.sqrt(1 - v_ratio * v_ratio);
+        const delta_t = gamma * (2 * v_ratio * L0 / C_REAL);
+        
+        // 格式化数字显示
+        const fmt = (num) => num.toExponential(3);
+
+        const stepsHtml = `
+            <div class="math-step">1. 已知条件：v = ${v_ratio}c, L₀ = ${L0} m</div>
+            <div class="math-step">2. 洛伦兹因子：γ = 1 / √(1 - v²/c²)</div>
+            <div class="math-step">   ➔ γ = 1 / √(1 - ${v_ratio}²) = <span class="math-highlight">${gamma.toFixed(4)}</span></div>
+            <div class="math-step">3. 列车系时间差公式：Δt' = γ(2vL₀/c²)</div>
+            <div class="math-step">   ➔ Δt' = ${gamma.toFixed(4)} × (2 × ${v_ratio}c × ${L0}) / c²</div>
+            <div class="math-step">   ➔ Δt' = ${gamma.toFixed(4)} × ${fmt(2 * v_ratio * L0 / C_REAL)} s</div>
+            <div class="math-result">⚡ 最终时间差 Δt' = ${fmt(delta_t)} s</div>
+        `;
+        document.getElementById('calc-steps').innerHTML = stepsHtml;
+    }
+
+    // --- 动画循环 ---
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+
+        // 1. 列车自动行驶
+        const visualSpeed = 3 * v_ratio;
+        trainGroup.position.x += visualSpeed;
+
+        // 2. 自动触发逻辑
+        if (!hasTriggered && trainGroup.position.x >= 0 && trainGroup.position.x < visualSpeed + 1) {
+            triggerAutoFlash();
+        }
+
+        // 3. 列车跑出视野后重置
+        if (trainGroup.position.x > L0 + 400) {
+            trainGroup.position.x = -(L0 + 400);
+            resetFlash();
+        }
+
+        // 4. 触发线淡出
+        if (triggerLineMat.opacity > 0) {
+            triggerLineMat.opacity -= 0.02;
+        }
+
+        // 5. 光波扩散
+        if (isFlashing) {
+            flashTimer++;
+            const currentRadius = flashTimer * 6;
+            lightWave.scale.set(currentRadius, currentRadius, currentRadius);
+
+            if (currentRadius >= L0) {
+                towerLeft.getObjectByName("bulb").material.color.setHex(0x00ffff);
+                towerRight.getObjectByName("bulb").material.color.setHex(0x00ffff);
+            }
+
+            if (currentRadius > 1500) {
+                isFlashing = false;
+                lightWave.visible = false;
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    updateParams();
+    animate();
+</script>
+</body>
+</html>

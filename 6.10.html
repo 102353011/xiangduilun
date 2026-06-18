@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论效应：运动平面镜对光波的反射 | 频率变化与反射角偏移</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+        }
+        /* 主信息面板 - 左上角 */
+        #info-panel {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 8px 16px;
+            color: #f0f0f0;
+            pointer-events: none;
+            z-index: 15;
+            border-left: 4px solid #ffaa44;
+            max-width: 360px;
+            font-size: 12px;
+        }
+        #info-panel h1 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+        }
+        #info-panel p {
+            margin: 0;
+            font-size: 0.7rem;
+            opacity: 0.85;
+        }
+        .formula-badge {
+            font-family: monospace;
+            background: #00000055;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: #ffdd99;
+        }
+        /* 计算面板 - 右上角 */
+        #calc-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 330px;
+            background: rgba(10, 14, 28, 0.94);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 10px 14px;
+            color: #eef;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border: 1px solid rgba(255,200,100,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            z-index: 20;
+            line-height: 1.45;
+        }
+        #calc-panel h3 {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: #ffcc88;
+            text-align: center;
+            border-bottom: 1px solid #ffaa5555;
+            padding-bottom: 3px;
+        }
+        .calc-step {
+            margin-bottom: 8px;
+            border-left: 3px solid #ffaa66;
+            padding-left: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 6px 6px 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #ffdd99;
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+        }
+        .step-formula {
+            font-size: 0.68rem;
+            color: #bbddff;
+            word-break: break-word;
+            font-family: 'Courier New', 'SF Mono', monospace;
+        }
+        .calc-result {
+            background: #00000066;
+            padding: 6px;
+            border-radius: 10px;
+            margin-top: 8px;
+            text-align: center;
+            border: 1px solid #ffaa6655;
+        }
+        .result-value {
+            font-size: 0.85rem;
+            color: #ffdd99;
+            font-weight: bold;
+        }
+        /* 控制栏 - 底部 */
+        #control-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            background: rgba(20, 24, 45, 0.94);
+            backdrop-filter: blur(14px);
+            border-radius: 40px;
+            padding: 8px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+        }
+        .ctrl-group {
+            background: rgba(0,0,0,0.6);
+            border-radius: 40px;
+            padding: 4px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 130px;
+        }
+        .ctrl-group label {
+            font-size: 10px;
+            color: #ccc;
+        }
+        .ctrl-group .value {
+            font-weight: bold;
+            color: #ffaa66;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        input {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ffaa44;
+        }
+        button {
+            background: #2c5a7a;
+            border: none;
+            padding: 5px 16px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 11px;
+        }
+        button:hover {
+            background: #1a4058;
+        }
+        #footnote {
+            position: absolute;
+            bottom: 80px;
+            left: 16px;
+            background: rgba(0,0,0,0.5);
+            color: #ccddff;
+            padding: 2px 10px;
+            border-radius: 16px;
+            font-size: 9px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 15;
+        }
+        @media (max-width: 780px) {
+            #calc-panel { width: 280px; padding: 8px 10px; top: 12px; right: 8px; font-size: 10px; }
+            .ctrl-group { min-width: 105px; padding: 3px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="info-panel">
+    <h1>🪞 相对论：运动平面镜对光波的反射</h1>
+    <p>平面镜以速度 <i>v</i> 自左向右运动。入射光频率 ω₀，与水平夹角 θ₀，自右向左入射。<br>
+    <strong>求反射光波的频率 ω 及反射角 θ（相对论效应）</strong></p>
+    <div class="formula-badge">
+        频率变化: ω = ω₀·γ²(1+βcosθ₀)(1+β/cos?) | 反射角: tanθ = sinθ₀ / [γ²(cosθ₀+β)]
+    </div>
+</div>
+
+<div id="calc-panel">
+    <h3>📐 相对论计算过程</h3>
+    <div class="calc-step">
+        <div class="step-title">❶ 变换到镜子静止系</div>
+        <div class="step-formula">
+            镜子速度 v (向右)，入射光在镜子系中频率 ω₁ = γω₀(1+βcosθ₀)<br>
+            入射角 cosθ₁ = (cosθ₀+β)/(1+βcosθ₀)
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❷ 镜子系中反射</div>
+        <div class="step-formula">
+            反射定律：θ₁' = π - θ₁，频率不变 ω₂ = ω₁
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❸ 变换回实验室系</div>
+        <div class="step-formula">
+            反射光频率 ω = γω₂(1+βcosθ₁') = γ²ω₀(1+βcosθ₀)(1-βcosθ₁)<br>
+            反射角满足 tanθ = sinθ₀ / [γ²(cosθ₀+β)]
+        </div>
+    </div>
+    <div class="calc-result">
+        <div>📊 计算结果</div>
+        <div class="result-value">
+            反射频率: ω/ω₀ = <span id="freq-ratio">0.00</span><br>
+            反射角: θ = <span id="ref-angle">0.0</span>° &nbsp;|&nbsp; 入射角: θ₀ = <span id="inc-angle">0.0</span>°
+        </div>
+        <div style="font-size:9px;">运动镜子导致频率升高（蓝移）且反射角改变</div>
+    </div>
+</div>
+
+<div id="control-bar">
+    <div class="ctrl-group">
+        <label>🪞 镜面速度 β = v/c</label>
+        <input type="range" id="vSlider" min="0" max="0.95" step="0.005" value="0.5">
+        <span class="value" id="vValue">0.500</span>
+    </div>
+    <div class="ctrl-group">
+        <label>📐 入射角 θ₀ (度)</label>
+        <input type="range" id="thetaSlider" min="10" max="80" step="1" value="45">
+        <span class="value" id="thetaValue">45°</span>
+    </div>
+    <button id="resetCameraBtn">🎥 重置相机</button>
+    <div class="angle-badge" id="modeLabel">✨ 红色光线: 入射波 | 蓝色光线: 反射波 | 镜面右移</div>
+</div>
+<div id="footnote">
+    💡 运动镜面压缩反射光波长 → 频率升高 | 反射角不等于入射角（相对论效应）
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // --- 初始化场景 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050b1a);
+    scene.fog = new THREE.FogExp2(0x050b1a, 0.0015);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(6, 4, 10);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+
+    // 轨道控制
+    let controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = false;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+    controls.target.set(0, 0, 0);
+    
+    document.getElementById('resetCameraBtn').addEventListener('click', () => {
+        camera.position.set(6, 4, 10);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    });
+
+    // --- 辅助元素：网格、坐标轴、星空 ---
+    const grid = new THREE.GridHelper(14, 20, 0x77aaff, 0x335588);
+    grid.position.y = -1.2;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.3;
+    scene.add(grid);
+    
+    const axesHelper = new THREE.AxesHelper(7);
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.15;
+    scene.add(axesHelper);
+    
+    // 星空
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1200;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+        starPos[i*3] = (Math.random() - 0.5) * 200;
+        starPos[i*3+1] = (Math.random() - 0.5) * 80;
+        starPos[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+    
+    // 光照
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+    mainLight.position.set(3, 5, 2);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+    const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+    fillLight.position.set(-2, 1, 3);
+    scene.add(fillLight);
+    
+    // --- 核心模型：平面镜 (矩形平面) ---
+    let mirrorGroup = null;
+    let mirrorPositionX = 0;
+    let currentBeta = 0.5;
+    let incidentAngleDeg = 45;
+    let gamma = 1 / Math.sqrt(1 - 0.5 * 0.5);
+    
+    // 光线线条
+    let incidentLine = null;
+    let reflectedLine = null;
+    let incidentArrow = null;
+    let reflectedArrow = null;
+    
+    // 动态粒子效果 (代表光波)
+    let incidentParticles = [];
+    let reflectedParticles = [];
+    
+    function createMirror() {
+        if (mirrorGroup) scene.remove(mirrorGroup);
+        const group = new THREE.Group();
+        
+        // 镜面主体 (矩形)
+        const width = 2.5;
+        const height = 2.0;
+        const geometry = new THREE.PlaneGeometry(width, height);
+        const material = new THREE.MeshStandardMaterial({ color: 0x88aaff, metalness: 0.9, roughness: 0.2, emissive: 0x224466, side: THREE.DoubleSide });
+        const plane = new THREE.Mesh(geometry, material);
+        plane.position.set(0, 0, 0);
+        plane.castShadow = true;
+        group.add(plane);
+        
+        // 边框
+        const edgesGeo = new THREE.EdgesGeometry(geometry);
+        const edgesMat = new THREE.LineBasicMaterial({ color: 0xffcc88 });
+        const wireframe = new THREE.LineSegments(edgesGeo, edgesMat);
+        wireframe.position.copy(plane.position);
+        group.add(wireframe);
+        
+        // CSS2D 标签
+        const div = document.createElement('div');
+        div.textContent = '🪞 运动镜面';
+        div.style.color = '#ffdd99';
+        div.style.fontSize = '10px';
+        div.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        div.style.padding = '2px 8px';
+        div.style.borderRadius = '12px';
+        const label = new CSS2DObject(div);
+        label.position.set(0, 1.2, 0);
+        group.add(label);
+        
+        group.position.set(mirrorPositionX, 0, 0);
+        return group;
+    }
+    
+    // 计算反射角和频率比
+    function computeReflection(beta, theta0_deg) {
+        const theta0_rad = theta0_deg * Math.PI / 180;
+        const cosTheta0 = Math.cos(theta0_rad);
+        const sinTheta0 = Math.sin(theta0_rad);
+        const gammaVal = 1 / Math.sqrt(1 - beta * beta);
+        
+        // 镜子系中入射角
+        const cosTheta1 = (cosTheta0 + beta) / (1 + beta * cosTheta0);
+        const sinTheta1 = sinTheta0 / (gammaVal * (1 + beta * cosTheta0));
+        const theta1_rad = Math.atan2(sinTheta1, cosTheta1);
+        
+        // 反射角 (镜子系中反射角 = π - 入射角)
+        const theta1_ref_rad = Math.PI - theta1_rad;
+        const cosTheta1_ref = Math.cos(theta1_ref_rad);
+        
+        // 变换回实验室系反射角
+        const cosTheta_ref = (cosTheta1_ref - beta) / (1 - beta * cosTheta1_ref);
+        const sinTheta_ref = Math.sin(theta1_ref_rad) / (gammaVal * (1 - beta * cosTheta1_ref));
+        let theta_ref_rad = Math.atan2(sinTheta_ref, cosTheta_ref);
+        if (theta_ref_rad < 0) theta_ref_rad += Math.PI;
+        const theta_ref_deg = theta_ref_rad * 180 / Math.PI;
+        
+        // 频率比: ω/ω₀ = γ² (1+β cosθ₀)(1 - β cosθ₁_ref)
+        const freqRatio = gammaVal * gammaVal * (1 + beta * cosTheta0) * (1 - beta * cosTheta1_ref);
+        
+        return { theta_ref_deg, freqRatio, theta1_rad: theta1_rad * 180 / Math.PI };
+    }
+    
+    // 更新光线可视化
+    function updateRays() {
+        const beta = currentBeta;
+        const theta0 = incidentAngleDeg;
+        const gammaVal = 1 / Math.sqrt(1 - beta * beta);
+        const theta0_rad = theta0 * Math.PI / 180;
+        
+        const { theta_ref_deg, freqRatio } = computeReflection(beta, theta0);
+        const theta_ref_rad = theta_ref_deg * Math.PI / 180;
+        
+        // 更新UI
+        document.getElementById('freq-ratio').innerHTML = freqRatio.toFixed(4);
+        document.getElementById('ref-angle').innerHTML = theta_ref_deg.toFixed(2);
+        document.getElementById('inc-angle').innerHTML = theta0.toFixed(1);
+        
+        // 入射光线方向 (自右向左，所以从右侧指向镜面)
+        // 入射光线起点: 从右侧远处指向镜面中心 (0,0,0)
+        const incStartX = 4.5;
+        const incEndX = 0;
+        const incDirX = incEndX - incStartX;
+        const incDirY = Math.tan(theta0_rad) * Math.abs(incDirX);
+        const incEndY = 0;
+        const incStartY = incEndY - incDirY;
+        
+        // 反射光线方向
+        const refStartX = 0;
+        const refEndX = 4.5;
+        const refDirX = refEndX - refStartX;
+        const refDirY = Math.tan(theta_ref_rad) * refDirX;
+        const refEndY = refDirY;
+        
+        // 更新线条
+        if (incidentLine) {
+            const points = [new THREE.Vector3(incStartX, incStartY, 0.2), new THREE.Vector3(0, 0, 0.2)];
+            incidentLine.geometry.dispose();
+            incidentLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+        }
+        if (reflectedLine) {
+            const points = [new THREE.Vector3(0, 0, 0.2), new THREE.Vector3(refEndX, refEndY, 0.2)];
+            reflectedLine.geometry.dispose();
+            reflectedLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+        }
+        
+        // 更新箭头位置 (重新创建简单)
+        if (incidentArrow) scene.remove(incidentArrow);
+        if (reflectedArrow) scene.remove(reflectedArrow);
+        
+        const incDirNorm = new THREE.Vector3(-Math.cos(theta0_rad), -Math.sin(theta0_rad), 0).normalize();
+        const incArrowPos = new THREE.Vector3(incStartX, incStartY, 0.2);
+        incidentArrow = new THREE.ArrowHelper(incDirNorm, incArrowPos, 1.2, 0xff6666, 0.6, 0.4);
+        scene.add(incidentArrow);
+        
+        const refDirNorm = new THREE.Vector3(Math.cos(theta_ref_rad), Math.sin(theta_ref_rad), 0).normalize();
+        const refArrowPos = new THREE.Vector3(0.5, 0.3, 0.2);
+        reflectedArrow = new THREE.ArrowHelper(refDirNorm, refArrowPos, 1.2, 0x66ff66, 0.6, 0.4);
+        scene.add(reflectedArrow);
+    }
+    
+    // 动态粒子效果 - 模拟光波传播
+    let particleTime = 0;
+    function updateParticles(deltaTime) {
+        particleTime += deltaTime * 2.5;
+        
+        // 入射粒子: 从右侧向左移动
+        const theta0_rad = incidentAngleDeg * Math.PI / 180;
+        const incSpeed = 3.5;
+        const numParticles = 8;
+        
+        // 清理旧粒子
+        incidentParticles.forEach(p => scene.remove(p));
+        reflectedParticles.forEach(p => scene.remove(p));
+        incidentParticles = [];
+        reflectedParticles = [];
+        
+        // 创建入射粒子
+        for (let i = 0; i < numParticles; i++) {
+            const offset = (particleTime + i * 0.5) % 3.0;
+            const t = offset / 3.0;
+            const x = 4.0 - t * 4.5;
+            const y = -Math.tan(theta0_rad) * (x - 4.0);
+            if (x > -0.5 && x < 4.5) {
+                const particleGeo = new THREE.SphereGeometry(0.08, 8, 8);
+                const particleMat = new THREE.MeshStandardMaterial({ color: 0xff6666, emissive: 0xff3300, emissiveIntensity: 0.5 });
+                const particle = new THREE.Mesh(particleGeo, particleMat);
+                particle.position.set(x, y, 0.3);
+                scene.add(particle);
+                incidentParticles.push(particle);
+            }
+        }
+        
+        // 反射粒子
+        const { theta_ref_deg } = computeReflection(currentBeta, incidentAngleDeg);
+        const theta_ref_rad = theta_ref_deg * Math.PI / 180;
+        for (let i = 0; i < numParticles; i++) {
+            const offset = (particleTime + i * 0.5) % 3.0;
+            const t = offset / 3.0;
+            const x = 0.3 + t * 4.2;
+            const y = Math.tan(theta_ref_rad) * x;
+            if (x < 5.0) {
+                const particleGeo = new THREE.SphereGeometry(0.08, 8, 8);
+                const particleMat = new THREE.MeshStandardMaterial({ color: 0x66ff66, emissive: 0x33ff33, emissiveIntensity: 0.5 });
+                const particle = new THREE.Mesh(particleGeo, particleMat);
+                particle.position.set(x, y, 0.3);
+                scene.add(particle);
+                reflectedParticles.push(particle);
+            }
+        }
+    }
+    
+    // 添加镜面运动动画 (来回移动，演示相对速度效果)
+    let mirrorAnimTime = 0;
+    let mirrorSpeed = 0;
+    
+    function updateMirrorMotion(deltaTime) {
+        if (!mirrorGroup) return;
+        // 镜面以当前 beta 对应的速度移动 (演示用，在一定范围内往复)
+        const speed = currentBeta * 2.2;
+        mirrorAnimTime += deltaTime * speed;
+        const range = 2.5;
+        mirrorPositionX = Math.sin(mirrorAnimTime) * range;
+        mirrorGroup.position.set(mirrorPositionX, 0, 0);
+        
+        // 动态更新光线 (因为镜面移动，入射点变化，光线角度不变但需要重新计算起点)
+        // 保持相对方向
+        const theta0_rad = incidentAngleDeg * Math.PI / 180;
+        const mirrorX = mirrorPositionX;
+        
+        // 入射光线起点调整 (始终保持从右侧指向镜面)
+        const incStartX = mirrorX + 4.0;
+        const incEndX = mirrorX;
+        const incDirX = incEndX - incStartX;
+        const incDirY = Math.tan(theta0_rad) * Math.abs(incDirX);
+        const incStartY = -incDirY;
+        
+        if (incidentLine) {
+            const points = [new THREE.Vector3(incStartX, incStartY, 0.2), new THREE.Vector3(mirrorX, 0, 0.2)];
+            incidentLine.geometry.dispose();
+            incidentLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+        }
+        
+        // 反射光线
+        const { theta_ref_deg } = computeReflection(currentBeta, incidentAngleDeg);
+        const theta_ref_rad = theta_ref_deg * Math.PI / 180;
+        const refEndX = mirrorX + 4.5;
+        const refEndY = Math.tan(theta_ref_rad) * 4.5;
+        
+        if (reflectedLine) {
+            const points = [new THREE.Vector3(mirrorX, 0, 0.2), new THREE.Vector3(refEndX, refEndY, 0.2)];
+            reflectedLine.geometry.dispose();
+            reflectedLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+        }
+        
+        // 更新箭头位置
+        if (incidentArrow) {
+            const incDirNorm = new THREE.Vector3(-Math.cos(theta0_rad), -Math.sin(theta0_rad), 0).normalize();
+            incidentArrow.position.copy(new THREE.Vector3(incStartX, incStartY, 0.2));
+        }
+        if (reflectedArrow) {
+            const refDirNorm = new THREE.Vector3(Math.cos(theta_ref_rad), Math.sin(theta_ref_rad), 0).normalize();
+            reflectedArrow.position.copy(new THREE.Vector3(mirrorX + 0.6, 0.2, 0.2));
+        }
+    }
+    
+    // 参数控制
+    const vSlider = document.getElementById('vSlider');
+    const thetaSlider = document.getElementById('thetaSlider');
+    const vValueSpan = document.getElementById('vValue');
+    const thetaValueSpan = document.getElementById('thetaValue');
+    
+    function refreshParams() {
+        currentBeta = parseFloat(vSlider.value);
+        incidentAngleDeg = parseFloat(thetaSlider.value);
+        
+        vValueSpan.innerText = currentBeta.toFixed(3);
+        thetaValueSpan.innerText = incidentAngleDeg + "°";
+        
+        gamma = 1 / Math.sqrt(1 - currentBeta * currentBeta);
+        updateRays();
+        
+        // 重置粒子时间
+        particleTime = 0;
+    }
+    
+    vSlider.addEventListener('input', refreshParams);
+    thetaSlider.addEventListener('input', refreshParams);
+    
+    // 初始化场景
+    function init() {
+        mirrorGroup = createMirror();
+        scene.add(mirrorGroup);
+        
+        // 创建光线线条
+        const incMat = new THREE.LineBasicMaterial({ color: 0xff6666, linewidth: 2 });
+        const refMat = new THREE.LineBasicMaterial({ color: 0x66ff66, linewidth: 2 });
+        incidentLine = new THREE.Line(new THREE.BufferGeometry(), incMat);
+        reflectedLine = new THREE.Line(new THREE.BufferGeometry(), refMat);
+        scene.add(incidentLine);
+        scene.add(reflectedLine);
+        
+        // 添加辅助元素：法线指示
+        const normalLineMat = new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.4 });
+        const normalPoints = [new THREE.Vector3(0, -1.2, 0.1), new THREE.Vector3(0, 1.2, 0.1)];
+        const normalGeo = new THREE.BufferGeometry().setFromPoints(normalPoints);
+        const normalLine = new THREE.Line(normalGeo, normalLineMat);
+        scene.add(normalLine);
+        
+        // 添加入射光标签
+        const incLabelDiv = document.createElement('div');
+        incLabelDiv.textContent = '入射光 →';
+        incLabelDiv.style.color = '#ff8888';
+        incLabelDiv.style.fontSize = '9px';
+        const incLabel = new CSS2DObject(incLabelDiv);
+        incLabel.position.set(2.5, 1.2, 0.5);
+        scene.add(incLabel);
+        
+        const refLabelDiv = document.createElement('div');
+        refLabelDiv.textContent = '反射光 →';
+        refLabelDiv.style.color = '#88ff88';
+        refLabelDiv.style.fontSize = '9px';
+        const refLabel = new CSS2DObject(refLabelDiv);
+        refLabel.position.set(2.5, -0.8, 0.5);
+        scene.add(refLabel);
+        
+        refreshParams();
+    }
+    
+    // 动画循环
+    let lastFrameTime = performance.now();
+    
+    function animate() {
+        const now = performance.now();
+        let delta = Math.min(0.033, (now - lastFrameTime) / 1000);
+        lastFrameTime = now;
+        
+        updateMirrorMotion(delta);
+        updateParticles(delta);
+        
+        stars.rotation.y += 0.0005;
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    
+    init();
+    animate();
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>

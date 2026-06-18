@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论效应：运动观察者眼中的直尺角度 | 同起点直观对比 + 第一人称视角</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+        }
+        /* 主信息面板 - 左上角 */
+        #info-panel {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 8px 16px;
+            color: #f0f0f0;
+            pointer-events: none;
+            z-index: 15;
+            border-left: 4px solid #ffaa44;
+            max-width: 330px;
+            font-size: 12px;
+        }
+        #info-panel h1 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+        }
+        #info-panel p {
+            margin: 0;
+            font-size: 0.7rem;
+            opacity: 0.85;
+        }
+        .formula-badge {
+            font-family: monospace;
+            background: #00000055;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: #ffdd99;
+        }
+        /* 计算面板 - 右上角 */
+        #calc-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 310px;
+            background: rgba(10, 14, 28, 0.94);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 10px 14px;
+            color: #eef;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border: 1px solid rgba(255,200,100,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            z-index: 20;
+            line-height: 1.45;
+        }
+        #calc-panel h3 {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: #ffcc88;
+            text-align: center;
+            border-bottom: 1px solid #ffaa5555;
+            padding-bottom: 3px;
+        }
+        .calc-step {
+            margin-bottom: 8px;
+            border-left: 3px solid #ffaa66;
+            padding-left: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 6px 6px 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #ffdd99;
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+        }
+        .step-formula {
+            font-size: 0.68rem;
+            color: #bbddff;
+            word-break: break-word;
+            font-family: 'Courier New', 'SF Mono', monospace;
+        }
+        .calc-result {
+            background: #00000066;
+            padding: 6px;
+            border-radius: 10px;
+            margin-top: 8px;
+            text-align: center;
+            border: 1px solid #ffaa6655;
+        }
+        .result-value {
+            font-size: 0.95rem;
+            color: #ffdd99;
+            font-weight: bold;
+        }
+        /* 控制栏 - 底部 */
+        #control-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            background: rgba(20, 24, 45, 0.94);
+            backdrop-filter: blur(14px);
+            border-radius: 40px;
+            padding: 8px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+        }
+        .ctrl-group {
+            background: rgba(0,0,0,0.6);
+            border-radius: 40px;
+            padding: 4px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 130px;
+        }
+        .ctrl-group label {
+            font-size: 10px;
+            color: #ccc;
+        }
+        .ctrl-group .value {
+            font-weight: bold;
+            color: #ffaa66;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        input {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ffaa44;
+        }
+        button {
+            background: #2c5a7a;
+            border: none;
+            padding: 5px 16px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 11px;
+        }
+        button:hover {
+            background: #1a4058;
+        }
+        .angle-badge {
+            background: #00000088;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 10px;
+            font-family: monospace;
+        }
+        .view-badge {
+            background: #2c5a7a;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .view-badge:hover {
+            background: #3a7a9a;
+        }
+        /* 左下角辅助 */
+        #footnote {
+            position: absolute;
+            bottom: 80px;
+            left: 16px;
+            background: rgba(0,0,0,0.5);
+            color: #ccddff;
+            padding: 2px 10px;
+            border-radius: 16px;
+            font-size: 9px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 15;
+        }
+        @media (max-width: 780px) {
+            #calc-panel { width: 270px; padding: 8px 10px; top: 12px; right: 8px; font-size: 10px; }
+            .ctrl-group { min-width: 105px; padding: 3px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="info-panel">
+    <h1>📐 相对论：运动观察者眼中的直尺角度</h1>
+    <p>在 Σ 系中，直尺静止且与 x 轴夹角 θ。观察者以速度 <i>v</i> 沿 x 轴运动。<br>
+    <strong>观察者看到的直尺与 x 轴夹角 θ' 如何变化？</strong></p>
+    <div class="formula-badge">
+        tan θ' = tan θ / √(1 - v²/c²) &nbsp;&nbsp;→&nbsp;&nbsp; θ' = arctan(tanθ / γ)
+    </div>
+</div>
+
+<div id="calc-panel">
+    <h3>📐 相对论计算过程</h3>
+    <div class="calc-step">
+        <div class="step-title">❶ 静止系 Σ 中直尺</div>
+        <div class="step-formula">
+            直尺两端坐标差：Δx = l·cosθ，Δy = l·sinθ<br>
+            (其中 l 为直尺固有长度)
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❷ 洛伦兹变换到观察者系 Σ'</div>
+        <div class="step-formula">
+            观察者速度 v 沿 x 轴，γ = 1/√(1-β²)，β=v/c<br>
+            Δx' = γ·Δx (同时测量条件)<br>
+            Δy' = Δy (垂直于运动方向不变)
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❸ 观察者看到的倾角</div>
+        <div class="step-formula">
+            tan θ' = Δy' / Δx' = (l·sinθ) / (γ·l·cosθ)<br>
+            → <strong>tan θ' = tan θ / γ = tan θ · √(1-β²)</strong>
+        </div>
+    </div>
+    <div class="calc-result">
+        <div>👁️ 观察者测量角度</div>
+        <div class="result-value">
+            θ' = <span id="angle-value">0.0</span>°
+        </div>
+        <div style="font-size:9px;">由于长度收缩效应，直尺在运动方向压缩 → 视觉角度增大</div>
+    </div>
+</div>
+
+<div id="control-bar">
+    <div class="ctrl-group">
+        <label>👁️ 观察者速度 β = v/c</label>
+        <input type="range" id="vSlider" min="0" max="0.98" step="0.005" value="0.6">
+        <span class="value" id="vValue">0.600</span>
+    </div>
+    <div class="ctrl-group">
+        <label>📐 静止夹角 θ (度)</label>
+        <input type="range" id="thetaSlider" min="10" max="80" step="1" value="45">
+        <span class="value" id="thetaValue">45°</span>
+    </div>
+    <div class="ctrl-group">
+        <label>📏 直尺长度 (视觉单位)</label>
+        <input type="range" id="lenSlider" min="1.5" max="4.0" step="0.05" value="2.8">
+        <span class="value" id="lenValue">2.80</span>
+    </div>
+    <button id="resetCameraBtn">🎥 重置相机</button>
+    <button id="observerViewBtn" class="view-badge">👁️ 观察者第一人称视角</button>
+    <div class="angle-badge" id="modeLabel">✨ 运动方向 → x轴正方向</div>
+</div>
+<div id="footnote">
+    💡 红色直尺：静止系中的实际角度 | 绿色直尺：观察者看到的收缩后角度 | 两尺从同一点(原点)引出，直观对比角度变化<br>
+    🔍 点击「观察者第一人称视角」可从观察者角度直视直尺，直观看到角度变化
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // --- 初始化场景 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050b1a);
+    scene.fog = new THREE.FogExp2(0x050b1a, 0.002);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(5, 4, 8);
+    camera.lookAt(0, 0.5, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+
+    // 轨道控制 (默认第三人称)
+    let controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = false;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+    controls.target.set(0, 0.5, 0);
+    
+    // 保存默认相机位置和视角
+    const defaultCameraPos = new THREE.Vector3(5, 4, 8);
+    const defaultTarget = new THREE.Vector3(0, 0.5, 0);
+    
+    let isObserverView = false;
+    
+    // 观察者标志物 (用于第一人称跟随)
+    let observerMarker = null;
+    let observerPosX = -3;
+    
+    // 辅助函数：重置到默认视角
+    function resetToDefaultView() {
+        isObserverView = false;
+        camera.position.copy(defaultCameraPos);
+        controls.target.copy(defaultTarget);
+        controls.update();
+        controls.enabled = true;
+    }
+    
+    // 切换到观察者第一人称视角
+    function switchToObserverView() {
+        isObserverView = true;
+        controls.enabled = false;
+        
+        if (observerMarker) {
+            const observerPos = observerMarker.position.clone();
+            camera.position.copy(observerPos);
+            camera.position.y = 0.6;
+            camera.lookAt(0, 0.5, 0);
+        }
+    }
+    
+    // --- 辅助元素：网格、坐标轴、星空 ---
+    const grid = new THREE.GridHelper(10, 20, 0x77aaff, 0x335588);
+    grid.position.y = -0.8;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.35;
+    scene.add(grid);
+    
+    const axesHelper = new THREE.AxesHelper(5);
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.2;
+    scene.add(axesHelper);
+    
+    // 星空
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1200;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+        starPos[i*3] = (Math.random() - 0.5) * 200;
+        starPos[i*3+1] = (Math.random() - 0.5) * 80;
+        starPos[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+    
+    // 光照
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+    mainLight.position.set(3, 5, 2);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+    const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+    fillLight.position.set(-2, 1, 3);
+    scene.add(fillLight);
+    
+    // --- 核心模型：直尺 (从同一点原点引出，直观对比角度) ---
+    let staticRuler = null;      // 半透明红色，表示静止系中的实际直尺
+    let observedRuler = null;    // 绿色，表示观察者测量到的收缩后直尺
+    let rulerLength = 2.8;       // 固有长度 (场景单位)
+    let angleDeg = 45;           // 静止夹角 θ (度)
+    let beta = 0.6;              // v/c
+    
+    // 创建从原点引出的直尺 (起点在原点，沿角度方向延伸)
+    function createRulerFromOrigin(length, angleDeg, color, opacity = 1.0, yOffset = 0) {
+        const group = new THREE.Group();
+        const rad = angleDeg * Math.PI / 180;
+        const dx = length * Math.cos(rad);
+        const dy = length * Math.sin(rad);
+        
+        // 圆柱体主体 (从原点延伸到末端)
+        const cylinderGeo = new THREE.CylinderGeometry(0.08, 0.08, length, 8);
+        const material = new THREE.MeshStandardMaterial({ color: color, metalness: 0.6, roughness: 0.3, transparent: opacity < 1.0, opacity: opacity });
+        const cylinder = new THREE.Mesh(cylinderGeo, material);
+        // 旋转使圆柱体从默认Y轴方向转到目标方向，并平移到中点
+        cylinder.quaternion.setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            new THREE.Vector3(dx, dy, 0).normalize()
+        );
+        cylinder.position.set(dx/2, dy/2 + yOffset, 0);
+        group.add(cylinder);
+        
+        // 起点球体装饰 (原点)
+        const startSphereMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0x442200 });
+        const startSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), startSphereMat);
+        startSphere.position.set(0, yOffset, 0);
+        group.add(startSphere);
+        
+        // 末端球体装饰
+        const endSphereMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.2 });
+        const endSphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), endSphereMat);
+        endSphere.position.set(dx, dy + yOffset, 0);
+        group.add(endSphere);
+        
+        return group;
+    }
+    
+    function updateRulers() {
+        // 移除旧物体
+        if (staticRuler) scene.remove(staticRuler);
+        if (observedRuler) scene.remove(observedRuler);
+        
+        // 静止系直尺 (半透明红色) - 从原点引出
+        staticRuler = createRulerFromOrigin(rulerLength, angleDeg, 0xff6666, 0.5, 0);
+        scene.add(staticRuler);
+        
+        // 计算观察者看到的角度: tanθ' = tanθ / γ
+        const gamma = 1 / Math.sqrt(1 - beta * beta);
+        const tanTheta = Math.tan(angleDeg * Math.PI / 180);
+        const tanThetaPrime = tanTheta / gamma;
+        let observedAngleDeg = Math.atan(tanThetaPrime) * 180 / Math.PI;
+        if (observedAngleDeg < 0) observedAngleDeg += 180;
+        
+        // 观察者系中直尺 - 从同一点原点引出，但角度不同，直观对比
+        observedRuler = createRulerFromOrigin(rulerLength, observedAngleDeg, 0x66ff66, 0.9, 0);
+        scene.add(observedRuler);
+        
+        // 更新UI显示角度
+        document.getElementById('angle-value').innerHTML = observedAngleDeg.toFixed(2);
+        
+        // 添加辅助文字说明 (CSS2D)
+        updateAngleLabels(angleDeg, observedAngleDeg);
+        
+        // 如果处于观察者视角，刷新相机朝向
+        if (isObserverView && observerMarker) {
+            camera.position.copy(observerMarker.position);
+            camera.position.y = 0.6;
+            camera.lookAt(0, 0.5, 0);
+        }
+    }
+    
+    let angleLabelStatic = null;
+    let angleLabelObserved = null;
+    function updateAngleLabels(staticDeg, observedDeg) {
+        if (!angleLabelStatic) {
+            const div = document.createElement('div');
+            div.style.backgroundColor = 'rgba(0,0,0,0.6)';
+            div.style.color = '#ffaa88';
+            div.style.fontSize = '10px';
+            div.style.padding = '2px 6px';
+            div.style.borderRadius = '12px';
+            div.style.border = '1px solid #ff8888';
+            angleLabelStatic = new CSS2DObject(div);
+            scene.add(angleLabelStatic);
+        }
+        // 标签放在红色直尺末端附近
+        const rad = staticDeg * Math.PI / 180;
+        const labelX = rulerLength * Math.cos(rad) + 0.3;
+        const labelY = rulerLength * Math.sin(rad) + 0.2;
+        angleLabelStatic.position.set(labelX, labelY, 0);
+        angleLabelStatic.element.textContent = `静止系 θ = ${staticDeg}°`;
+        
+        if (!angleLabelObserved) {
+            const div2 = document.createElement('div');
+            div2.style.backgroundColor = 'rgba(0,0,0,0.6)';
+            div2.style.color = '#aaffaa';
+            div2.style.fontSize = '10px';
+            div2.style.padding = '2px 6px';
+            div2.style.borderRadius = '12px';
+            div2.style.border = '1px solid #88ff88';
+            angleLabelObserved = new CSS2DObject(div2);
+            scene.add(angleLabelObserved);
+        }
+        const radObs = observedDeg * Math.PI / 180;
+        const labelXObs = rulerLength * Math.cos(radObs) + 0.3;
+        const labelYObs = rulerLength * Math.sin(radObs) + 0.2;
+        angleLabelObserved.position.set(labelXObs, labelYObs, 0);
+        angleLabelObserved.element.textContent = `观察者系 θ' = ${observedDeg}°`;
+    }
+    
+    // 创建观察者标志物 (带眼睛的可爱小球，沿x轴运动)
+    function createObserverIndicator() {
+        const group = new THREE.Group();
+        const bodyGeo = new THREE.SphereGeometry(0.28, 32, 32);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x88ffaa, emissive: 0x226633, emissiveIntensity: 0.4 });
+        const sphere = new THREE.Mesh(bodyGeo, bodyMat);
+        group.add(sphere);
+        // 眼睛
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const pupilMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+        const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), eyeMat);
+        eyeL.position.set(-0.14, 0.12, 0.28);
+        const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 16), pupilMat);
+        pupilL.position.set(-0.14, 0.1, 0.36);
+        const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), eyeMat);
+        eyeR.position.set(0.14, 0.12, 0.28);
+        const pupilR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 16), pupilMat);
+        pupilR.position.set(0.14, 0.1, 0.36);
+        group.add(eyeL);
+        group.add(pupilL);
+        group.add(eyeR);
+        group.add(pupilR);
+        
+        const div = document.createElement('div');
+        div.textContent = '👁️ 观察者';
+        div.style.color = '#aaffaa';
+        div.style.fontSize = '9px';
+        div.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        div.style.padding = '1px 5px';
+        div.style.borderRadius = '12px';
+        const label = new CSS2DObject(div);
+        label.position.set(0, 0.5, 0);
+        group.add(label);
+        
+        group.position.set(observerPosX, 0.4, -1.5);
+        return group;
+    }
+    
+    // 参数控制
+    const vSlider = document.getElementById('vSlider');
+    const thetaSlider = document.getElementById('thetaSlider');
+    const lenSlider = document.getElementById('lenSlider');
+    const vValueSpan = document.getElementById('vValue');
+    const thetaValueSpan = document.getElementById('thetaValue');
+    const lenValueSpan = document.getElementById('lenValue');
+    const resetCameraBtn = document.getElementById('resetCameraBtn');
+    const observerViewBtn = document.getElementById('observerViewBtn');
+    
+    function refreshAllParams() {
+        beta = parseFloat(vSlider.value);
+        angleDeg = parseFloat(thetaSlider.value);
+        rulerLength = parseFloat(lenSlider.value);
+        
+        vValueSpan.innerText = beta.toFixed(3);
+        thetaValueSpan.innerText = angleDeg + "°";
+        lenValueSpan.innerText = rulerLength.toFixed(2);
+        
+        updateRulers();
+    }
+    
+    vSlider.addEventListener('input', refreshAllParams);
+    thetaSlider.addEventListener('input', refreshAllParams);
+    lenSlider.addEventListener('input', refreshAllParams);
+    resetCameraBtn.addEventListener('click', resetToDefaultView);
+    observerViewBtn.addEventListener('click', switchToObserverView);
+    
+    // 初始化场景
+    function init() {
+        refreshAllParams();
+        observerMarker = createObserverIndicator();
+        scene.add(observerMarker);
+        
+        // 添加运动方向指示箭头
+        const arrowColor = 0x88aaff;
+        const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-3, -0.6, 1.8), 2.5, arrowColor, 0.6, 0.4);
+        scene.add(arrowHelper);
+        const arrowHelper2 = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-3, -0.6, -1.5), 2.5, arrowColor, 0.6, 0.4);
+        scene.add(arrowHelper2);
+        
+        // 添加x轴方向说明
+        const xLabelDiv = document.createElement('div');
+        xLabelDiv.textContent = 'x 轴 (运动方向) →';
+        xLabelDiv.style.color = '#aaaaff';
+        xLabelDiv.style.fontSize = '10px';
+        const xLabel = new CSS2DObject(xLabelDiv);
+        xLabel.position.set(4.2, -0.9, 0);
+        scene.add(xLabel);
+        
+        // 在原点添加一个发光点，强调公共起点
+        const originGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(0.12, 16, 16),
+            new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4422, emissiveIntensity: 0.6 })
+        );
+        originGlow.position.set(0, 0, 0);
+        scene.add(originGlow);
+        
+        // 添加从观察者到原点的视线指示线
+        const sightLineMat = new THREE.LineBasicMaterial({ color: 0x88ff88, transparent: true, opacity: 0.4 });
+        const sightPoints = [new THREE.Vector3(0, 0.5, 0), new THREE.Vector3(0, 0.5, 0)];
+        const sightGeo = new THREE.BufferGeometry().setFromPoints(sightPoints);
+        const sightLine = new THREE.Line(sightGeo, sightLineMat);
+        scene.add(sightLine);
+        
+        // 动画中更新视线
+        setInterval(() => {
+            if (observerMarker && sightLine) {
+                const observerPos = observerMarker.position.clone();
+                const targetPos = new THREE.Vector3(0, 0.3, 0);
+                const points = [observerPos, targetPos];
+                sightLine.geometry.dispose();
+                sightLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+            }
+        }, 100);
+    }
+    
+    // 动画：让观察者标志沿x轴来回运动，体现不同相对速度
+    let animTime = 0;
+    function animateObserver(deltaTime) {
+        if (!observerMarker) return;
+        animTime += deltaTime * 0.9;
+        const range = 4.8;
+        observerPosX = -range + (animTime % (2*range));
+        observerMarker.position.x = observerPosX;
+        
+        // 如果在观察者视角，更新相机位置
+        if (isObserverView && observerMarker) {
+            const observerPos = observerMarker.position.clone();
+            camera.position.copy(observerPos);
+            camera.position.y = 0.55;
+            camera.lookAt(0, 0.4, 0);
+        }
+    }
+    
+    // 动画循环
+    let lastFrameTime = performance.now();
+    
+    function animate() {
+        const now = performance.now();
+        let delta = Math.min(0.033, (now - lastFrameTime) / 1000);
+        lastFrameTime = now;
+        
+        animateObserver(delta);
+        stars.rotation.y += 0.0008;
+        
+        if (!isObserverView) {
+            controls.update();
+        }
+        
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    
+    init();
+    animate();
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    refreshAllParams();
+</script>
+</body>
+</html>

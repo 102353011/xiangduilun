@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论：电磁场变换 | 寻找纯电场或纯磁场的参考系</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 20px; color: white; z-index: 20; pointer-events: none; border-left: 4px solid #ffaa44; max-width: 340px; }
+        #info-panel h1 { margin: 0 0 6px; font-size: 1.1rem; }
+        #calc-panel { position: absolute; top: 20px; right: 20px; width: 290px; background: rgba(10,14,28,0.92); backdrop-filter: blur(12px); border-radius: 16px; padding: 12px; color: #eef; font-size: 12px; border: 1px solid rgba(255,200,100,0.4); z-index: 20; pointer-events: auto; }
+        .result-value { background: #00000066; padding: 8px; border-radius: 10px; text-align: center; margin-top: 10px; }
+        #control-bar { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(20,24,45,0.94); border-radius: 40px; padding: 10px 20px; display: flex; gap: 20px; justify-content: center; z-index: 25; }
+        .ctrl-group { background: rgba(0,0,0,0.6); border-radius: 40px; padding: 5px 18px; text-align: center; }
+        input { width: 140px; accent-color: #ffaa44; }
+        button { background: #2c5a7a; border: none; padding: 6px 18px; border-radius: 40px; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div id="info-panel"><h1>⚡ 电磁场变换 | 寻找纯电场/纯磁场参考系</h1><p>在S系中E⊥B。寻找S'系（沿E×B方向运动），使其中只有电场或只有磁场。</p></div>
+<div id="calc-panel"><h3>📐 变换条件</h3><div>若 |E| &lt; c|B|：v = (E×B)/B² → 纯电场</div><div>若 |E| &gt; c|B|：v = (c²/E²) B → 纯磁场</div><div class="result-value" id="formulaResult">当前: |E| &lt; c|B| → v = <span id="vValue">0.00</span>c</div></div>
+<div id="control-bar"><div class="ctrl-group"><label>电场 Ex</label><input type="range" id="ex" min="0" max="2" step="0.01" value="1.0"><span id="exVal">1.00</span></div>
+<div class="ctrl-group"><label>电场 Ey</label><input type="range" id="ey" min="0" max="2" step="0.01" value="0"><span id="eyVal">0.00</span></div>
+<div class="ctrl-group"><label>磁场 Bz</label><input type="range" id="bz" min="0" max="2" step="0.01" value="1.2"><span id="bzVal">1.20</span></div>
+<button id="resetView">重置相机</button></div>
+
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x050b1a); scene.fog=new THREE.FogExp2(0x050b1a,0.008);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(5,4,7);
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(window.innerWidth,window.innerHeight); document.body.appendChild(renderer.domElement);
+const labelRenderer=new CSS2DRenderer(); labelRenderer.setSize(window.innerWidth,window.innerHeight); labelRenderer.domElement.style.position='absolute'; labelRenderer.domElement.style.top='0px'; labelRenderer.domElement.style.left='0px'; labelRenderer.domElement.style.pointerEvents='none'; document.body.appendChild(labelRenderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; document.getElementById('resetView').addEventListener('click',()=>{camera.position.set(5,4,7); controls.target.set(0,0,0); controls.update();});
+const grid=new THREE.GridHelper(8,20,0x77aaff,0x335588); grid.position.y=-1.2; scene.add(grid);
+const axes=new THREE.AxesHelper(5); axes.material.transparent=true; axes.material.opacity=0.2; scene.add(axes);
+const ambient=new THREE.AmbientLight(0x404060); scene.add(ambient);
+const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(2,3,4); scene.add(light);
+let eArrow, bArrow, vArrow;
+function updateFields(){
+    const ex=parseFloat(document.getElementById('ex').value); const ey=parseFloat(document.getElementById('ey').value); const bz=parseFloat(document.getElementById('bz').value);
+    document.getElementById('exVal').innerText=ex.toFixed(2); document.getElementById('eyVal').innerText=ey.toFixed(2); document.getElementById('bzVal').innerText=bz.toFixed(2);
+    const E=Math.sqrt(ex*ex+ey*ey); const B=bz;
+    if(eArrow) scene.remove(eArrow); if(bArrow) scene.remove(bArrow); if(vArrow) scene.remove(vArrow);
+    eArrow=new THREE.ArrowHelper(new THREE.Vector3(ex,ey,0).normalize(), new THREE.Vector3(0,1.2,0), E*1.2, 0xff6666, 0.6, 0.4);
+    bArrow=new THREE.ArrowHelper(new THREE.Vector3(0,0,Math.sign(bz)), new THREE.Vector3(0,-0.8,0), Math.abs(bz)*1.2, 0x66ff66, 0.6, 0.4);
+    let vBeta=0; let mode="";
+    if(Math.abs(B)>1e-6 && E<B){ vBeta=E/B; mode="纯电场 (E' ≠ 0, B'=0)"; }
+    else if(E>1e-6 && E>B){ vBeta=Math.pow(B/E,2); mode="纯磁场 (B' ≠ 0, E'=0)"; }
+    else{ mode="|E| = c|B|，任意系均混合"; vBeta=0; }
+    document.getElementById('vValue').innerText=vBeta.toFixed(4);
+    document.getElementById('formulaResult').innerHTML=`${mode}<br>v = ${vBeta.toFixed(4)}c`;
+    const vDir=new THREE.Vector3(ey,-ex,0).normalize();
+    if(vBeta>0) vArrow=new THREE.ArrowHelper(vDir, new THREE.Vector3(0,-1.5,0.5), vBeta*2, 0xffaa44, 0.5, 0.3);
+    scene.add(eArrow); scene.add(bArrow); if(vArrow) scene.add(vArrow);
+}
+document.getElementById('ex').addEventListener('input',updateFields); document.getElementById('ey').addEventListener('input',updateFields); document.getElementById('bz').addEventListener('input',updateFields);
+updateFields();
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); labelRenderer.render(scene,camera); }
+animate();
+window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); labelRenderer.setSize(window.innerWidth,window.innerHeight); });
+</script>
+</body>
+</html>

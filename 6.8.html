@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论效应：两惯性系中时钟相遇 | 时刻相同条件动态演示</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+        }
+        /* 主信息面板 - 左上角 */
+        #info-panel {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 8px 16px;
+            color: #f0f0f0;
+            pointer-events: none;
+            z-index: 15;
+            border-left: 4px solid #ffaa44;
+            max-width: 340px;
+            font-size: 12px;
+        }
+        #info-panel h1 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+        }
+        #info-panel p {
+            margin: 0;
+            font-size: 0.7rem;
+            opacity: 0.85;
+        }
+        .formula-badge {
+            font-family: monospace;
+            background: #00000055;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: #ffdd99;
+        }
+        /* 计算面板 - 右上角 */
+        #calc-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 320px;
+            background: rgba(10, 14, 28, 0.94);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 10px 14px;
+            color: #eef;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border: 1px solid rgba(255,200,100,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            z-index: 20;
+            line-height: 1.45;
+        }
+        #calc-panel h3 {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: #ffcc88;
+            text-align: center;
+            border-bottom: 1px solid #ffaa5555;
+            padding-bottom: 3px;
+        }
+        .calc-step {
+            margin-bottom: 8px;
+            border-left: 3px solid #ffaa66;
+            padding-left: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 6px 6px 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #ffdd99;
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+        }
+        .step-formula {
+            font-size: 0.68rem;
+            color: #bbddff;
+            word-break: break-word;
+            font-family: 'Courier New', 'SF Mono', monospace;
+        }
+        .calc-result {
+            background: #00000066;
+            padding: 6px;
+            border-radius: 10px;
+            margin-top: 8px;
+            text-align: center;
+            border: 1px solid #ffaa6655;
+        }
+        .result-value {
+            font-size: 0.9rem;
+            color: #ffdd99;
+            font-weight: bold;
+        }
+        /* 控制栏 - 底部 */
+        #control-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            background: rgba(20, 24, 45, 0.94);
+            backdrop-filter: blur(14px);
+            border-radius: 40px;
+            padding: 8px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+        }
+        .ctrl-group {
+            background: rgba(0,0,0,0.6);
+            border-radius: 40px;
+            padding: 4px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 130px;
+        }
+        .ctrl-group label {
+            font-size: 10px;
+            color: #ccc;
+        }
+        .ctrl-group .value {
+            font-weight: bold;
+            color: #ffaa66;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        input {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ffaa44;
+        }
+        button {
+            background: #2c5a7a;
+            border: none;
+            padding: 5px 16px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 11px;
+        }
+        button:hover {
+            background: #1a4058;
+        }
+        .highlight {
+            background: #ffaa44;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        #footnote {
+            position: absolute;
+            bottom: 80px;
+            left: 16px;
+            background: rgba(0,0,0,0.5);
+            color: #ccddff;
+            padding: 2px 10px;
+            border-radius: 16px;
+            font-size: 9px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 15;
+        }
+        @media (max-width: 780px) {
+            #calc-panel { width: 280px; padding: 8px 10px; top: 12px; right: 8px; font-size: 10px; }
+            .ctrl-group { min-width: 105px; padding: 3px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="info-panel">
+    <h1>⏰ 相对论：两惯性系中时钟相遇 | 时刻相同条件</h1>
+    <p>Σ 和 Σ' 沿 x 轴相对运动，速度 v。原点相遇时 t = t' = 0。<br>
+    <strong>Σ 系中某点 (x, y, z) 处的时钟与 Σ' 系中何处的时钟相遇时，指示的时刻相同？</strong></p>
+    <div class="formula-badge">
+        相遇点满足：x' = -γ·x，且 t' = t = γ·(x/v)·(1 - 1/γ)
+    </div>
+</div>
+
+<div id="calc-panel">
+    <h3>📐 相对论计算过程</h3>
+    <div class="calc-step">
+        <div class="step-title">❶ 设 Σ 系时钟位于 (x, 0, 0)，读数 t</div>
+        <div class="step-formula">
+            该时钟的世界线：x = 常数，时间从 0 到 t
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❷ 洛伦兹变换到 Σ' 系</div>
+        <div class="step-formula">
+            x' = γ(x - vt)，t' = γ(t - vx/c²)<br>
+            其中 γ = 1/√(1-β²)，β=v/c
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❸ 相遇时两时钟读数相同</div>
+        <div class="step-formula">
+            Σ' 系中相遇点的时钟读数等于 t'，要求 t' = t<br>
+            → γ(t - vx/c²) = t → t(γ-1) = γ·vx/c²
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❹ 求解相遇条件</div>
+        <div class="step-formula">
+            t = (γ·vx/c²)/(γ-1) = (x/v)·(1 + 1/γ)  <br>
+            且 x' = γ(x - vt) = -γ·x/(γ+1) = -x·(γ/(γ+1))
+        </div>
+    </div>
+    <div class="calc-result">
+        <div>🎯 相遇时读数相同条件</div>
+        <div class="result-value">
+            t = t' = <span id="meet-time">0.00</span> × (x/v)
+        </div>
+        <div style="font-size:9px;">Σ' 系中相遇位置: x' = <span id="meet-xprime">0.00</span> · x</div>
+    </div>
+</div>
+
+<div id="control-bar">
+    <div class="ctrl-group">
+        <label>🚀 相对速度 β = v/c</label>
+        <input type="range" id="vSlider" min="0" max="0.95" step="0.005" value="0.6">
+        <span class="value" id="vValue">0.600</span>
+    </div>
+    <div class="ctrl-group">
+        <label>📍 Σ系时钟位置 x (单位)</label>
+        <input type="range" id="xSlider" min="1.0" max="5.0" step="0.1" value="2.5">
+        <span class="value" id="xValue">2.50</span>
+    </div>
+    <button id="resetCameraBtn">🎥 重置相机</button>
+    <div class="angle-badge" id="modeLabel">✨ Σ' 系相对 Σ 系沿 +x 方向运动</div>
+</div>
+<div id="footnote">
+    💡 红色时钟：Σ 系中固定于 x 处的时钟 | 蓝色时钟：Σ' 系中移动的时钟 | 当两者相遇时，读数相同（高亮显示）
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // --- 初始化场景 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050b1a);
+    scene.fog = new THREE.FogExp2(0x050b1a, 0.002);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(6, 5, 10);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+
+    // 轨道控制
+    let controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = false;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+    controls.target.set(0, 0, 0);
+    
+    const defaultCameraPos = new THREE.Vector3(6, 5, 10);
+    document.getElementById('resetCameraBtn').addEventListener('click', () => {
+        camera.position.copy(defaultCameraPos);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    });
+
+    // --- 辅助元素：网格、坐标轴、星空 ---
+    const grid = new THREE.GridHelper(12, 20, 0x77aaff, 0x335588);
+    grid.position.y = -1.0;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.35;
+    scene.add(grid);
+    
+    const axesHelper = new THREE.AxesHelper(6);
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.2;
+    scene.add(axesHelper);
+    
+    // 星空
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1200;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+        starPos[i*3] = (Math.random() - 0.5) * 200;
+        starPos[i*3+1] = (Math.random() - 0.5) * 80;
+        starPos[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+    
+    // 光照
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+    mainLight.position.set(3, 5, 2);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+    const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+    fillLight.position.set(-2, 1, 3);
+    scene.add(fillLight);
+    
+    // --- 核心模型：两个时钟 ---
+    // Σ 系时钟：固定于 x 位置，红色
+    // Σ' 系时钟：从原点出发以速度 v 沿 x 轴运动，蓝色
+    let sigmaClock = null;      // 红色固定时钟
+    let sigmaPrimeClock = null; // 蓝色运动时钟
+    let meetingLine = null;     // 相遇时刻的高亮连线
+    
+    let currentBeta = 0.6;
+    let currentX = 2.5;         // Σ系时钟位置
+    let gamma = 1 / Math.sqrt(1 - currentBeta * currentBeta);
+    
+    // 运动参数
+    let primeClockPos = -4.0;    // Σ'系时钟在 Σ 系中的位置 (初始在左侧)
+    let timeElapsed = 0;         // 模拟时间
+    let animationActive = true;
+    let meetTriggered = false;
+    let meetTime = 0;
+    let meetXPrime = 0;
+    
+    // 创建时钟模型 (带表盘)
+    function createClock(color, name, isMoving = false) {
+        const group = new THREE.Group();
+        
+        // 表盘主体
+        const bodyGeo = new THREE.SphereGeometry(0.45, 32, 32);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: color, metalness: 0.7, roughness: 0.2, emissive: color, emissiveIntensity: 0.15 });
+        const sphere = new THREE.Mesh(bodyGeo, bodyMat);
+        sphere.castShadow = true;
+        group.add(sphere);
+        
+        // 表盘边框
+        const rimGeo = new THREE.TorusGeometry(0.48, 0.05, 16, 48);
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0xffdd88, metalness: 0.8 });
+        const rim = new THREE.Mesh(rimGeo, rimMat);
+        rim.rotation.x = Math.PI / 2;
+        group.add(rim);
+        
+        // 指针 (简单的十字)
+        const handMat = new THREE.MeshStandardMaterial({ color: 0xffaa66 });
+        const hourHand = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.25, 0.05), handMat);
+        hourHand.position.set(0, 0.15, 0.46);
+        const minuteHand = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.35, 0.05), handMat);
+        minuteHand.position.set(0, 0.22, 0.46);
+        group.add(hourHand);
+        group.add(minuteHand);
+        
+        // CSS2D 文字标签
+        const div = document.createElement('div');
+        div.textContent = name;
+        div.style.color = '#fff';
+        div.style.fontSize = '10px';
+        div.style.fontWeight = 'bold';
+        div.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        div.style.padding = '2px 6px';
+        div.style.borderRadius = '12px';
+        div.style.border = `1px solid ${color}`;
+        div.style.whiteSpace = 'nowrap';
+        const label = new CSS2DObject(div);
+        label.position.set(0, 0.7, 0);
+        group.add(label);
+        
+        group.userData = { name, isMoving };
+        return group;
+    }
+    
+    // 创建高亮连线
+    function createMeetingLine() {
+        const material = new THREE.LineBasicMaterial({ color: 0xffaa44, linewidth: 2 });
+        const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+        return line;
+    }
+    
+    // 更新 UI 计算结果
+    function updateCalculations() {
+        const beta = currentBeta;
+        const x = currentX;
+        const gammaVal = 1 / Math.sqrt(1 - beta * beta);
+        // 根据公式: t = (x/v) * (1 + 1/γ)
+        const t_over_xv = (1 + 1/gammaVal);
+        // x' = -γ·x/(γ+1)
+        const xprime_ratio = -gammaVal / (gammaVal + 1);
+        
+        document.getElementById('meet-time').innerHTML = t_over_xv.toFixed(4);
+        document.getElementById('meet-xprime').innerHTML = Math.abs(xprime_ratio).toFixed(4);
+    }
+    
+    // 刷新时钟位置和参数
+    function refreshParams() {
+        currentBeta = parseFloat(document.getElementById('vSlider').value);
+        currentX = parseFloat(document.getElementById('xSlider').value);
+        
+        document.getElementById('vValue').innerText = currentBeta.toFixed(3);
+        document.getElementById('xValue').innerText = currentX.toFixed(2);
+        
+        gamma = 1 / Math.sqrt(1 - currentBeta * currentBeta);
+        updateCalculations();
+        
+        // 重置运动状态
+        timeElapsed = 0;
+        primeClockPos = -5.0;
+        meetTriggered = false;
+        
+        // 更新固定时钟位置
+        if (sigmaClock) {
+            sigmaClock.position.set(currentX, 0, 0);
+        }
+        
+        // 重置运动时钟位置
+        if (sigmaPrimeClock) {
+            sigmaPrimeClock.position.set(primeClockPos, 0.2, 0.5);
+        }
+        
+        // 清除高亮
+        if (meetingLine) {
+            meetingLine.visible = false;
+        }
+    }
+    
+    // 检查相遇并触发高亮效果
+    function checkMeeting() {
+        if (meetTriggered) return;
+        // Σ'系时钟在 Σ 系中的位置 = primeClockPos
+        // 相遇条件：位置接近 Σ 系时钟位置 currentX
+        const distance = Math.abs(primeClockPos - currentX);
+        if (distance < 0.15) {
+            meetTriggered = true;
+            // 高亮两个时钟
+            if (sigmaClock) {
+                sigmaClock.children.forEach(child => {
+                    if (child.isMesh && child.material) {
+                        child.material.emissiveIntensity = 0.8;
+                        child.material.color.setHex(0xff8888);
+                    }
+                });
+            }
+            if (sigmaPrimeClock) {
+                sigmaPrimeClock.children.forEach(child => {
+                    if (child.isMesh && child.material) {
+                        child.material.emissiveIntensity = 0.8;
+                        child.material.color.setHex(0x88ff88);
+                    }
+                });
+            }
+            // 显示连线
+            if (meetingLine) {
+                meetingLine.visible = true;
+                const points = [new THREE.Vector3(primeClockPos, 0.3, 0.5), new THREE.Vector3(currentX, 0.2, 0)];
+                meetingLine.geometry.dispose();
+                meetingLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+            }
+            
+            // 3秒后恢复高亮
+            setTimeout(() => {
+                if (sigmaClock) {
+                    sigmaClock.children.forEach(child => {
+                        if (child.isMesh && child.material) {
+                            child.material.emissiveIntensity = 0.15;
+                            child.material.color.setHex(0xff6666);
+                        }
+                    });
+                }
+                if (sigmaPrimeClock) {
+                    sigmaPrimeClock.children.forEach(child => {
+                        if (child.isMesh && child.material) {
+                            child.material.emissiveIntensity = 0.15;
+                            child.material.color.setHex(0x66aaff);
+                        }
+                    });
+                }
+                if (meetingLine) meetingLine.visible = false;
+            }, 2000);
+        }
+    }
+    
+    // 动画更新：Σ'系时钟运动
+    function updateMotion(deltaTime) {
+        if (!sigmaPrimeClock) return;
+        
+        // 速度：v = β * c，c 取场景速度 3.0 单位/秒
+        const speed = currentBeta * 3.5;
+        primeClockPos += speed * deltaTime;
+        
+        // 边界重置，让演示循环
+        if (primeClockPos > 7.0) {
+            primeClockPos = -5.0;
+            meetTriggered = false;
+            timeElapsed = 0;
+        }
+        
+        sigmaPrimeClock.position.set(primeClockPos, 0.2, 0.5);
+        
+        // 更新时钟指针旋转（模拟时间流逝）
+        timeElapsed += deltaTime;
+        if (sigmaClock && sigmaClock.children) {
+            // 让指针缓慢旋转
+            const hourHand = sigmaClock.children.find(c => c.geometry && c.geometry.parameters && c.geometry.parameters.width === 0.05 && c.position.y === 0.15);
+            const minuteHand = sigmaClock.children.find(c => c.geometry && c.geometry.parameters && c.geometry.parameters.width === 0.05 && c.position.y === 0.22);
+            if (hourHand) hourHand.rotation.z = timeElapsed * 0.8;
+            if (minuteHand) minuteHand.rotation.z = timeElapsed * 2.0;
+        }
+        if (sigmaPrimeClock && sigmaPrimeClock.children) {
+            const hourHand = sigmaPrimeClock.children.find(c => c.geometry && c.geometry.parameters && c.geometry.parameters.width === 0.05 && c.position.y === 0.15);
+            const minuteHand = sigmaPrimeClock.children.find(c => c.geometry && c.geometry.parameters && c.geometry.parameters.width === 0.05 && c.position.y === 0.22);
+            if (hourHand) hourHand.rotation.z = timeElapsed * 0.8;
+            if (minuteHand) minuteHand.rotation.z = timeElapsed * 2.0;
+        }
+        
+        checkMeeting();
+    }
+    
+    // 初始化场景
+    function init() {
+        // 创建时钟
+        sigmaClock = createClock(0xff6666, 'Σ 系时钟 (固定)', false);
+        sigmaPrimeClock = createClock(0x66aaff, 'Σ\' 系时钟 (运动)', true);
+        
+        scene.add(sigmaClock);
+        scene.add(sigmaPrimeClock);
+        
+        // 初始位置
+        sigmaClock.position.set(currentX, 0, 0);
+        sigmaPrimeClock.position.set(-4.0, 0.2, 0.5);
+        
+        // 创建高亮连线
+        meetingLine = createMeetingLine();
+        meetingLine.visible = false;
+        
+        // 添加运动方向指示箭头
+        const arrowColor = 0x88aaff;
+        const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-4, -0.8, 1.5), 3, arrowColor, 0.6, 0.4);
+        scene.add(arrowHelper);
+        
+        // 添加坐标轴标签
+        const xLabelDiv = document.createElement('div');
+        xLabelDiv.textContent = 'x 轴 →';
+        xLabelDiv.style.color = '#aaaaff';
+        xLabelDiv.style.fontSize = '10px';
+        const xLabel = new CSS2DObject(xLabelDiv);
+        xLabel.position.set(5.5, -0.8, 0);
+        scene.add(xLabel);
+        
+        // 添加原点标记
+        const originMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.1, 8, 8),
+            new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x4488ff })
+        );
+        originMarker.position.set(0, 0, 0);
+        scene.add(originMarker);
+        
+        // 添加一条参考线表示 Σ' 系原点的轨迹
+        const trailPoints = [];
+        for (let x = -5; x <= 6; x += 0.2) trailPoints.push(new THREE.Vector3(x, -0.3, 0.5));
+        const trailGeo = new THREE.BufferGeometry().setFromPoints(trailPoints);
+        const trailMat = new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.3 });
+        const trailLine = new THREE.Line(trailGeo, trailMat);
+        scene.add(trailLine);
+        
+        // 参数绑定
+        const vSlider = document.getElementById('vSlider');
+        const xSlider = document.getElementById('xSlider');
+        
+        vSlider.addEventListener('input', () => {
+            refreshParams();
+        });
+        xSlider.addEventListener('input', () => {
+            refreshParams();
+        });
+        
+        refreshParams();
+    }
+    
+    // 动画循环
+    let lastTime = performance.now();
+    
+    function animate() {
+        const now = performance.now();
+        let delta = Math.min(0.033, (now - lastTime) / 1000);
+        lastTime = now;
+        
+        updateMotion(delta);
+        stars.rotation.y += 0.0008;
+        
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    
+    init();
+    animate();
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>

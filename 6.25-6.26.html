@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>康普顿散射：光子与电子的相互作用</title><style>body{margin:0;overflow:hidden;font-family:monospace}#info{position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#fff;z-index:20}#calc{position:absolute;top:20px;right:20px;width:300px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#ffdd99;z-index:20}#control{position:absolute;bottom:20px;left:20px;right:20px;background:rgba(0,0,0,0.7);border-radius:40px;padding:10px;display:flex;gap:20px;justify-content:center;z-index:20}</style></head>
+<body><div id="info"><h1>💥 康普顿散射 | 光子与电子相互作用</h1><p>光子能量 ℏω 射向静止电子，散射后波长变长（能量减小）。</p></div>
+<div id="calc"><h3>📐 康普顿散射公式</h3><div>入射波长 λ = <span id="lambdaIn">0.00</span> pm</div><div>散射波长 λ' = <span id="lambdaOut">0.00</span> pm</div><div>波长偏移 Δλ = <span id="deltaLambda">0.00</span> pm</div></div>
+<div id="control"><div><label>入射光子能量 (keV)</label><input type="range" id="energy" min="10" max="1000" step="10" value="100"><span id="energyVal">100</span></div>
+<div><label>散射角 θ (度)</label><input type="range" id="theta" min="0" max="180" step="5" value="90"><span id="thetaVal">90°</span></div>
+<button id="reset">重置相机</button></div>
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x050b1a);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(6,4,10);
+const renderer=new THREE.WebGLRenderer(); renderer.setSize(window.innerWidth,window.innerHeight); document.body.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true;
+document.getElementById('reset').addEventListener('click',()=>{camera.position.set(6,4,10); controls.target.set(0,0,0); controls.update();});
+const grid=new THREE.GridHelper(8,20,0x77aaff,0x335588); grid.position.y=-1; scene.add(grid);
+const axes=new THREE.AxesHelper(5); scene.add(axes);
+const ambient=new THREE.AmbientLight(0x404060); scene.add(ambient);
+const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(2,3,4); scene.add(light);
+let electron, photonIn, photonOut;
+function update(){
+    const EkeV=parseFloat(document.getElementById('energy').value); const thetaDeg=parseFloat(document.getElementById('theta').value);
+    document.getElementById('energyVal').innerText=EkeV; document.getElementById('thetaVal').innerText=thetaDeg+"°";
+    const hc=1.23984193e-6; const m0c2=511e-6; const lambda=hc/EkeV; const lambdaPrime=lambda+2.426e-12*Math.sin(thetaDeg*Math.PI/360)**2;
+    document.getElementById('lambdaIn').innerText=(lambda*1e12).toFixed(3);
+    document.getElementById('lambdaOut').innerText=(lambdaPrime*1e12).toFixed(3);
+    document.getElementById('deltaLambda').innerText=((lambdaPrime-lambda)*1e12).toFixed(3);
+    if(electron) scene.remove(electron);
+    electron=new THREE.Mesh(new THREE.SphereGeometry(0.25,32,32),new THREE.MeshStandardMaterial({color:0x66ff66}));
+    electron.position.set(0,0,0); scene.add(electron);
+    if(photonIn) scene.remove(photonIn); if(photonOut) scene.remove(photonOut);
+    photonIn=new THREE.ArrowHelper(new THREE.Vector3(-1,0,0), new THREE.Vector3(-1.5,0.5,0), 1.2, 0xff6666, 0.5, 0.3);
+    const rad=thetaDeg*Math.PI/180; const outDir=new THREE.Vector3(Math.cos(rad),Math.sin(rad),0);
+    photonOut=new THREE.ArrowHelper(outDir, new THREE.Vector3(0.5,0,0), 1.0, 0xffaa66, 0.5, 0.3);
+    scene.add(photonIn); scene.add(photonOut);
+}
+document.getElementById('energy').addEventListener('input',update); document.getElementById('theta').addEventListener('input',update);
+update();
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+animate();
+</script>
+</body>
+</html>

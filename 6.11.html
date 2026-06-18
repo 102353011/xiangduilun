@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论：快度与速度合成公式 | 双曲函数可视化</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 20px; color: white; z-index: 20; pointer-events: none; border-left: 4px solid #ffaa44; max-width: 320px; }
+        #info-panel h1 { margin: 0 0 6px; font-size: 1.2rem; }
+        #info-panel p { margin: 0; font-size: 0.8rem; opacity: 0.85; }
+        .formula { font-family: monospace; background: #00000066; padding: 4px 8px; border-radius: 8px; margin-top: 8px; font-size: 0.8rem; color: #ffdd99; }
+        #calc-panel { position: absolute; top: 20px; right: 20px; width: 280px; background: rgba(10,14,28,0.92); backdrop-filter: blur(12px); border-radius: 16px; padding: 12px; color: #eef; font-size: 12px; border: 1px solid rgba(255,200,100,0.4); z-index: 20; pointer-events: auto; }
+        #calc-panel h3 { margin: 0 0 10px; color: #ffcc88; text-align: center; }
+        .calc-step { border-left: 3px solid #ffaa66; padding-left: 10px; margin-bottom: 12px; background: rgba(0,0,0,0.2); border-radius: 0 8px 8px 0; }
+        .result-value { font-size: 1rem; color: #ffdd99; font-weight: bold; text-align: center; background: #00000066; padding: 6px; border-radius: 10px; margin-top: 8px; }
+        #control-bar { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(20,24,45,0.94); backdrop-filter: blur(14px); border-radius: 40px; padding: 10px 20px; display: flex; gap: 20px; justify-content: center; z-index: 25; pointer-events: auto; }
+        .ctrl-group { background: rgba(0,0,0,0.6); border-radius: 40px; padding: 5px 18px; text-align: center; }
+        .ctrl-group label { font-size: 11px; color: #ccc; display: block; }
+        input { width: 160px; cursor: pointer; accent-color: #ffaa44; }
+        .value { color: #ffaa66; font-weight: bold; font-family: monospace; }
+        button { background: #2c5a7a; border: none; padding: 6px 18px; border-radius: 40px; color: white; cursor: pointer; }
+        @media (max-width: 700px) { #calc-panel { width: 250px; } .ctrl-group { padding: 3px 10px; } input { width: 120px; } }
+    </style>
+</head>
+<body>
+<div id="info-panel">
+    <h1>⚡ 快度 y 与相对论速度合成</h1>
+    <p>定义快度 y：tanh y = β = v/c。洛伦兹变换可用双曲函数表示，速度合成对应快度加法。</p>
+    <div class="formula">β = tanh y &nbsp;&nbsp;→&nbsp;&nbsp; y = arctanh β</div>
+</div>
+<div id="calc-panel">
+    <h3>📐 快度合成公式</h3>
+    <div class="calc-step">❶ 定义：快度 y = arctanh(β)，β = v/c</div>
+    <div class="calc-step">❷ 洛伦兹变换矩阵：<br> 
+        [ cosh y, 0, 0, sinh y ]<br>
+        [ 0, 1, 0, 0 ]<br>
+        [ 0, 0, 1, 0 ]<br>
+        [ -sinh y, 0, 0, cosh y ]
+    </div>
+    <div class="calc-step">❸ 速度合成：β = (β₁+β₂)/(1+β₁β₂) &nbsp;→&nbsp; y = y₁ + y₂</div>
+    <div class="result-value">
+        合成快度 y = <span id="y_sum">0.00</span><br>
+        合成速度 β = <span id="beta_sum">0.000</span>
+    </div>
+</div>
+<div id="control-bar">
+    <div class="ctrl-group"><label>速度 β₁ = v₁/c</label><input type="range" id="b1" min="0" max="0.95" step="0.005" value="0.3"><span id="b1_val" class="value">0.300</span></div>
+    <div class="ctrl-group"><label>速度 β₂ = v₂/c</label><input type="range" id="b2" min="0" max="0.95" step="0.005" value="0.4"><span id="b2_val" class="value">0.400</span></div>
+    <button id="resetView">重置视角</button>
+</div>
+
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050b1a);
+    scene.fog = new THREE.FogExp2(0x050b1a, 0.008);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(4, 3, 6);
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+    
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+    document.getElementById('resetView').addEventListener('click', () => { camera.position.set(4, 3, 6); controls.target.set(0, 0, 0); controls.update(); });
+    
+    // 辅助元素
+    const grid = new THREE.GridHelper(8, 20, 0x77aaff, 0x335588);
+    grid.position.y = -1.2;
+    scene.add(grid);
+    const axes = new THREE.AxesHelper(5);
+    axes.material.transparent = true;
+    axes.material.opacity = 0.2;
+    scene.add(axes);
+    // 星空
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(1000 * 3);
+    for (let i=0; i<1000; i++) { starPos[i*3]=(Math.random()-0.5)*200; starPos[i*3+1]=(Math.random()-0.5)*100; starPos[i*3+2]=(Math.random()-0.5)*100-50; }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08 }));
+    scene.add(stars);
+    
+    // 双曲线可视化：绘制 tanh 曲线和快度示意
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x88aaff });
+    const points = [];
+    for (let y = -2.5; y <= 2.5; y += 0.05) { points.push(new THREE.Vector3(y, Math.tanh(y), 0)); }
+    const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
+    const curveLine = new THREE.Line(curveGeo, lineMat);
+    scene.add(curveLine);
+    
+    // 添加一个表示速度向量的箭头 (β1 和 β2 以及合成)
+    let arrow1, arrow2, arrowSum;
+    function updateArrows() {
+        if (arrow1) scene.remove(arrow1);
+        if (arrow2) scene.remove(arrow2);
+        if (arrowSum) scene.remove(arrowSum);
+        const b1 = parseFloat(document.getElementById('b1').value);
+        const b2 = parseFloat(document.getElementById('b2').value);
+        const y1 = Math.atanh(b1);
+        const y2 = Math.atanh(b2);
+        const ySum = y1 + y2;
+        const betaSum = Math.tanh(ySum);
+        document.getElementById('b1_val').innerText = b1.toFixed(3);
+        document.getElementById('b2_val').innerText = b2.toFixed(3);
+        document.getElementById('y_sum').innerText = ySum.toFixed(4);
+        document.getElementById('beta_sum').innerText = betaSum.toFixed(5);
+        
+        // 箭头位置: 从原点出发
+        const len1 = b1 * 2.5;
+        const len2 = b2 * 2.5;
+        const lenSum = betaSum * 2.5;
+        arrow1 = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1.2, 0.5), len1, 0xff6666, 0.5, 0.3);
+        arrow2 = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, -0.2, 0.5), len2, 0x66ff66, 0.5, 0.3);
+        arrowSum = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, -1.6, 0.5), lenSum, 0xffaa44, 0.6, 0.4);
+        scene.add(arrow1);
+        scene.add(arrow2);
+        scene.add(arrowSum);
+        
+        // 更新CSS2D标签
+        if (label1) label1.element.textContent = `β₁ = ${b1.toFixed(3)}  (快度 y₁ = ${y1.toFixed(3)})`;
+        if (label2) label2.element.textContent = `β₂ = ${b2.toFixed(3)}  (快度 y₂ = ${y2.toFixed(3)})`;
+        if (labelSum) labelSum.element.textContent = `合成 β = ${betaSum.toFixed(4)}  (快度 y = ${ySum.toFixed(3)})`;
+    }
+    
+    let label1, label2, labelSum;
+    function createLabels() {
+        const d1 = document.createElement('div'); d1.style.cssText = 'background:#000000aa;color:#ff8888;padding:2px 8px;border-radius:20px;font-size:11px;';
+        label1 = new CSS2DObject(d1); label1.position.set(1.5, 1.5, 0.5); scene.add(label1);
+        const d2 = document.createElement('div'); d2.style.cssText = 'background:#000000aa;color:#88ff88;padding:2px 8px;border-radius:20px;font-size:11px;';
+        label2 = new CSS2DObject(d2); label2.position.set(1.5, 0.1, 0.5); scene.add(label2);
+        const d3 = document.createElement('div'); d3.style.cssText = 'background:#000000aa;color:#ffcc88;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:bold;';
+        labelSum = new CSS2DObject(d3); labelSum.position.set(1.5, -1.3, 0.5); scene.add(labelSum);
+    }
+    
+    // 添加双曲函数曲线上的动点
+    let movingPoint;
+    function addMovingPoint() {
+        const sphereGeo = new THREE.SphereGeometry(0.08, 16, 16);
+        const material = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4400 });
+        movingPoint = new THREE.Mesh(sphereGeo, material);
+        scene.add(movingPoint);
+    }
+    
+    let time = 0;
+    function animatePoint() {
+        if (!movingPoint) return;
+        const b1 = parseFloat(document.getElementById('b1').value);
+        const b2 = parseFloat(document.getElementById('b2').value);
+        const ySum = Math.atanh(b1) + Math.atanh(b2);
+        const t = (Math.sin(time) + 1) / 2;
+        const yVal = -2 + t * 4;
+        const betaVal = Math.tanh(yVal);
+        movingPoint.position.set(yVal, betaVal, 0.2);
+        time += 0.01;
+    }
+    
+    // 光照
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(2, 3, 4);
+    scene.add(light);
+    
+    const b1Slider = document.getElementById('b1');
+    const b2Slider = document.getElementById('b2');
+    b1Slider.addEventListener('input', updateArrows);
+    b2Slider.addEventListener('input', updateArrows);
+    
+    createLabels();
+    addMovingPoint();
+    updateArrows();
+    
+    function animate() {
+        animatePoint();
+        stars.rotation.y += 0.002;
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    animate();
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); labelRenderer.setSize(window.innerWidth, window.innerHeight); });
+</script>
+</body>
+</html>

@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论效应：火箭匀加速运动 | 静止系与火箭系时间对比 (慢速演示版)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+        }
+        /* 主信息面板 - 左上角 */
+        #info-panel {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 8px 16px;
+            color: #f0f0f0;
+            pointer-events: none;
+            z-index: 15;
+            border-left: 4px solid #ffaa44;
+            max-width: 350px;
+            font-size: 12px;
+        }
+        #info-panel h1 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+        }
+        #info-panel p {
+            margin: 0;
+            font-size: 0.7rem;
+            opacity: 0.85;
+        }
+        .formula-badge {
+            font-family: monospace;
+            background: #00000055;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: #ffdd99;
+        }
+        /* 计算面板 - 右上角 */
+        #calc-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 320px;
+            background: rgba(10, 14, 28, 0.94);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 10px 14px;
+            color: #eef;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border: 1px solid rgba(255,200,100,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            z-index: 20;
+            line-height: 1.45;
+        }
+        #calc-panel h3 {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: #ffcc88;
+            text-align: center;
+            border-bottom: 1px solid #ffaa5555;
+            padding-bottom: 3px;
+        }
+        .calc-step {
+            margin-bottom: 8px;
+            border-left: 3px solid #ffaa66;
+            padding-left: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 6px 6px 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #ffdd99;
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+        }
+        .step-formula {
+            font-size: 0.68rem;
+            color: #bbddff;
+            word-break: break-word;
+            font-family: 'Courier New', 'SF Mono', monospace;
+        }
+        .calc-result {
+            background: #00000066;
+            padding: 6px;
+            border-radius: 10px;
+            margin-top: 8px;
+            text-align: center;
+            border: 1px solid #ffaa6655;
+        }
+        .result-value {
+            font-size: 0.9rem;
+            color: #ffdd99;
+            font-weight: bold;
+        }
+        /* 控制栏 - 底部 */
+        #control-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            background: rgba(20, 24, 45, 0.94);
+            backdrop-filter: blur(14px);
+            border-radius: 40px;
+            padding: 8px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+        }
+        .ctrl-group {
+            background: rgba(0,0,0,0.6);
+            border-radius: 40px;
+            padding: 4px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 140px;
+        }
+        .ctrl-group label {
+            font-size: 10px;
+            color: #ccc;
+        }
+        .ctrl-group .value {
+            font-weight: bold;
+            color: #ffaa66;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        input {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ffaa44;
+        }
+        button {
+            background: #2c5a7a;
+            border: none;
+            padding: 5px 16px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 11px;
+        }
+        button:hover {
+            background: #1a4058;
+        }
+        #footnote {
+            position: absolute;
+            bottom: 80px;
+            left: 16px;
+            background: rgba(0,0,0,0.5);
+            color: #ccddff;
+            padding: 2px 10px;
+            border-radius: 16px;
+            font-size: 9px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 15;
+        }
+        @media (max-width: 780px) {
+            #calc-panel { width: 280px; padding: 8px 10px; top: 12px; right: 8px; font-size: 10px; }
+            .ctrl-group { min-width: 110px; padding: 3px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="info-panel">
+    <h1>🚀 相对论：火箭匀加速运动 | 时间膨胀效应 (慢速演示)</h1>
+    <p>火箭从静止开始匀加速，瞬时惯性系中加速度 a = 20 m/s²，最终速度 v = √0.999 c。<br>
+    <strong>静止系时钟 t 与火箭内时钟 t' 各需多少时间？</strong></p>
+    <div class="formula-badge">
+        静止系时间: t = (v/a) / √(1-β²) ≈ 47.5 年 &nbsp;|&nbsp; 火箭固有时: t' = (c/a)·arsinh(βγ) ≈ 2.52 年
+    </div>
+</div>
+
+<div id="calc-panel">
+    <h3>📐 相对论计算过程</h3>
+    <div class="calc-step">
+        <div class="step-title">❶ 已知参数</div>
+        <div class="step-formula">
+            最终速度 v = √0.999 c ≈ 0.9995c<br>
+            固有加速度 a = 20 m/s² ≈ 2.06 ly/y²
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❷ 静止系加速时间</div>
+        <div class="step-formula">
+            相对论匀加速公式：v = a·t / √(1 + (a·t/c)²)<br>
+            解得 t = (v/a) / √(1-β²) = γ·v/a<br>
+            代入数值：t ≈ 47.5 年
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❸ 火箭固有时</div>
+        <div class="step-formula">
+            火箭内时间：τ = (c/a)·arsinh(a·t/c)<br>
+            代入得 τ ≈ 2.52 年
+        </div>
+    </div>
+    <div class="calc-result">
+        <div>⏱️ 时间对比结果</div>
+        <div class="result-value">
+            静止系 t = <span id="time-earth">0.00</span> 年 &nbsp;|&nbsp;
+            火箭系 t' = <span id="time-rocket">0.00</span> 年
+        </div>
+        <div style="font-size:9px;">火箭内时间远小于地面时间（时间膨胀效应）</div>
+    </div>
+</div>
+
+<div id="control-bar">
+    <div class="ctrl-group">
+        <label>🚀 最终速度 β = v/c</label>
+        <input type="range" id="vSlider" min="0.7" max="0.9999" step="0.0005" value="0.9995">
+        <span class="value" id="vValue">0.9995</span>
+    </div>
+    <div class="ctrl-group">
+        <label>⚡ 固有加速度 a (m/s²)</label>
+        <input type="range" id="aSlider" min="5" max="50" step="1" value="20">
+        <span class="value" id="aValue">20</span>
+    </div>
+    <button id="resetCameraBtn">🎥 重置相机</button>
+    <div class="angle-badge" id="modeLabel">✨ 火箭从静止开始匀加速 | 速度较慢，便于观察时间膨胀</div>
+</div>
+<div id="footnote">
+    💡 火箭从左侧开始加速向右运动 | 背景时钟显示静止系时间 | 火箭顶部时钟显示火箭固有时 | 演示速度已放慢以便清晰观察
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // --- 物理常量 ---
+    const c = 3e8;           // 光速 m/s
+    const secondsPerYear = 365.25 * 24 * 3600;
+    
+    // --- 初始化场景 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050b1a);
+    scene.fog = new THREE.FogExp2(0x050b1a, 0.0015);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(14, 7, 20);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+
+    // 轨道控制
+    let controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = false;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+    controls.target.set(0, 0, 0);
+    
+    document.getElementById('resetCameraBtn').addEventListener('click', () => {
+        camera.position.set(14, 7, 20);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    });
+
+    // --- 辅助元素：网格、坐标轴、星空 ---
+    const grid = new THREE.GridHelper(28, 32, 0x77aaff, 0x335588);
+    grid.position.y = -1.2;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.3;
+    scene.add(grid);
+    
+    const axesHelper = new THREE.AxesHelper(14);
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.12;
+    scene.add(axesHelper);
+    
+    // 星空
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1500;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+        starPos[i*3] = (Math.random() - 0.5) * 250;
+        starPos[i*3+1] = (Math.random() - 0.5) * 100;
+        starPos[i*3+2] = (Math.random() - 0.5) * 120 - 60;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+    
+    // 光照
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+    mainLight.position.set(5, 8, 3);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+    const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+    fillLight.position.set(-3, 2, 4);
+    scene.add(fillLight);
+    
+    // --- 火箭模型 ---
+    let rocketGroup = null;
+    let rocketPositionX = -10;
+    let rocketVelocity = 0;
+    let currentBeta = 0.9995;
+    let currentA = 20;        // m/s²
+    
+    // 动画时间 (模拟) - 放慢演示速度，实际物理时间按比例缩放
+    let simTime = 0;           // 模拟物理时间 (秒)
+    let simTimeRocket = 0;     // 火箭固有时 (秒)
+    let isAccelerating = true;
+    let targetBeta = 0.9995;
+    
+    // 演示时间缩放因子：让动画看起来更慢，但物理计算仍正确
+    // 实际火箭到达终点需要约47.5年，演示中我们让动画时长约60秒
+    const DEMO_TIME_SCALE = 1 / (47.5 * secondsPerYear) * 60;  // 将47.5年映射到60秒动画
+    // 但为了让运动平滑且最终位置合理，我们直接控制位置映射：目标位置对应最终速度达到的时刻
+    let demoProgress = 0;      // 0 到 1 的进度
+    let targetXPosition = 12;   // 终点位置
+    
+    // 轨迹点
+    let trailPoints = [];
+    let trailLine = null;
+    
+    // 时间显示标签
+    let earthTimeLabel = null;
+    let rocketTimeLabel = null;
+    
+    function createRocket() {
+        const group = new THREE.Group();
+        
+        // 主体
+        const bodyGeo = new THREE.CylinderGeometry(0.35, 0.5, 1.2, 16);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdd5555, metalness: 0.7, roughness: 0.3 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0;
+        group.add(body);
+        
+        // 头部
+        const noseGeo = new THREE.ConeGeometry(0.35, 0.6, 16);
+        const noseMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, metalness: 0.8 });
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+        nose.position.y = 0.65;
+        group.add(nose);
+        
+        // 尾部火焰效果
+        const flameGeo = new THREE.ConeGeometry(0.25, 0.5, 8);
+        const flameMat = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 0.6 });
+        const flame = new THREE.Mesh(flameGeo, flameMat);
+        flame.position.y = -0.55;
+        group.add(flame);
+        
+        // 机翼
+        const wingGeo = new THREE.BoxGeometry(0.8, 0.08, 0.3);
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0xccaa77 });
+        const leftWing = new THREE.Mesh(wingGeo, wingMat);
+        leftWing.position.set(-0.5, -0.1, 0);
+        const rightWing = new THREE.Mesh(wingGeo, wingMat);
+        rightWing.position.set(0.5, -0.1, 0);
+        group.add(leftWing);
+        group.add(rightWing);
+        
+        group.position.set(rocketPositionX, 0, 0);
+        group.castShadow = true;
+        
+        return group;
+    }
+    
+    // 创建时间显示标签
+    function createTimeLabels() {
+        const earthDiv = document.createElement('div');
+        earthDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        earthDiv.style.color = '#ffaa88';
+        earthDiv.style.fontSize = '12px';
+        earthDiv.style.fontFamily = 'monospace';
+        earthDiv.style.padding = '4px 12px';
+        earthDiv.style.borderRadius = '20px';
+        earthDiv.style.border = '1px solid #ff8866';
+        earthDiv.style.whiteSpace = 'nowrap';
+        earthTimeLabel = new CSS2DObject(earthDiv);
+        earthTimeLabel.position.set(6, 2.8, 0);
+        scene.add(earthTimeLabel);
+        
+        const rocketDiv = document.createElement('div');
+        rocketDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        rocketDiv.style.color = '#88ffaa';
+        rocketDiv.style.fontSize = '12px';
+        rocketDiv.style.fontFamily = 'monospace';
+        rocketDiv.style.padding = '4px 12px';
+        rocketDiv.style.borderRadius = '20px';
+        rocketDiv.style.border = '1px solid #88ff66';
+        rocketDiv.style.whiteSpace = 'nowrap';
+        rocketTimeLabel = new CSS2DObject(rocketDiv);
+        scene.add(rocketTimeLabel);
+    }
+    
+    // 计算给定进度下的物理时间和速度 (基于相对论匀加速公式)
+    // 已知最终速度 v_final，加速度 a，求达到该速度的静止系时间 t_earth 和固有时 t_rocket
+    function computeTimesAtProgress(progress, betaTarget, a) {
+        // 进度 0->1 对应静止系时间 0 -> t_total
+        const gamma_target = 1 / Math.sqrt(1 - betaTarget * betaTarget);
+        const t_total_earth = (betaTarget * c / a) * gamma_target;
+        const t_total_rocket = (c / a) * Math.asinh(betaTarget * gamma_target);
+        
+        const t_earth = progress * t_total_earth;
+        // 对于匀加速，固有时与静止系时间的关系：τ = (c/a) * arsinh(a*t/c)
+        const tau = (c / a) * Math.asinh(a * t_earth / c);
+        
+        // 当前速度: v = a*t / sqrt(1 + (a*t/c)^2)
+        const v_current = (a * t_earth) / Math.sqrt(1 + (a * t_earth / c) ** 2);
+        const beta_current = v_current / c;
+        
+        return { t_earth, tau, beta_current, v_current };
+    }
+    
+    // 根据进度更新火箭位置 (位置通过对速度积分近似，简化为进度线性映射到终点)
+    // 为让运动看起来自然，位置与进度的关系：匀加速下 x = (c²/a)(√(1+(at/c)²)-1)
+    function getPositionAtProgress(progress, betaTarget, a) {
+        const gamma_target = 1 / Math.sqrt(1 - betaTarget * betaTarget);
+        const t_total_earth = (betaTarget * c / a) * gamma_target;
+        const t_earth = progress * t_total_earth;
+        // x = (c²/a) * (√(1 + (a t / c)²) - 1)
+        const x = (c * c / a) * (Math.sqrt(1 + (a * t_earth / c) ** 2) - 1);
+        // 映射到场景坐标：起点 -10，终点 +12，缩放因子
+        const x_start = -10;
+        const x_end = 12;
+        // 最大理论位移约 2.5e16 米，映射到 22 单位场景
+        const scale = (x_end - x_start) / ((c * c / a) * (Math.sqrt(1 + (a * t_total_earth / c) ** 2) - 1));
+        return x_start + x * scale;
+    }
+    
+    // 更新UI显示
+    function updateTimeDisplay(progress, betaTarget, a) {
+        const { t_earth, tau, beta_current } = computeTimesAtProgress(progress, betaTarget, a);
+        const t_years = t_earth / secondsPerYear;
+        const tau_years = tau / secondsPerYear;
+        
+        if (earthTimeLabel) {
+            earthTimeLabel.element.textContent = `🌍 静止系时间: ${t_years.toFixed(2)} 年 (β = ${beta_current.toFixed(4)})`;
+        }
+        if (rocketTimeLabel && rocketGroup) {
+            rocketTimeLabel.position.copy(rocketGroup.position);
+            rocketTimeLabel.position.y += 1.2;
+            rocketTimeLabel.element.textContent = `🚀 火箭固有时: ${tau_years.toFixed(2)} 年`;
+        }
+        
+        // 更新底部计算结果
+        document.getElementById('time-earth').innerHTML = t_years.toFixed(2);
+        document.getElementById('time-rocket').innerHTML = tau_years.toFixed(2);
+    }
+    
+    // 更新轨迹
+    function updateTrail() {
+        if (!trailLine) {
+            const trailMat = new THREE.LineBasicMaterial({ color: 0x44aaff });
+            const trailGeo = new THREE.BufferGeometry();
+            trailLine = new THREE.Line(trailGeo, trailMat);
+            scene.add(trailLine);
+        }
+        
+        trailPoints.push(new THREE.Vector3(rocketPositionX, -0.3, 0.5));
+        if (trailPoints.length > 150) trailPoints.shift();
+        
+        const points = trailPoints.map(p => p.clone());
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        trailLine.geometry.dispose();
+        trailLine.geometry = geometry;
+    }
+    
+    // 刷新参数并重置模拟
+    let animationProgress = 0;
+    let animationSpeed = 0.008;  // 慢速演示，约 125 秒完成全程
+    
+    function refreshSimulation() {
+        targetBeta = parseFloat(document.getElementById('vSlider').value);
+        currentA = parseFloat(document.getElementById('aSlider').value);
+        
+        document.getElementById('vValue').innerText = targetBeta.toFixed(4);
+        document.getElementById('aValue').innerText = currentA;
+        
+        // 重置进度
+        animationProgress = 0;
+        isAccelerating = true;
+        trailPoints = [];
+        if (trailLine) {
+            scene.remove(trailLine);
+            trailLine = null;
+        }
+        
+        // 更新起始位置
+        rocketPositionX = -10;
+        if (rocketGroup) {
+            rocketGroup.position.set(rocketPositionX, 0, 0);
+        }
+        
+        // 计算理论最终时间用于显示
+        const gamma_target = 1 / Math.sqrt(1 - targetBeta * targetBeta);
+        const t_theory = (targetBeta * c / currentA) * gamma_target;
+        const tau_theory = (c / currentA) * Math.asinh(targetBeta * gamma_target);
+        
+        document.getElementById('time-earth').innerHTML = (t_theory / secondsPerYear).toFixed(2);
+        document.getElementById('time-rocket').innerHTML = (tau_theory / secondsPerYear).toFixed(2);
+        
+        // 更新显示
+        updateTimeDisplay(animationProgress, targetBeta, currentA);
+    }
+    
+    // 添加背景元素
+    function addMarkers() {
+        const startMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2, 16, 16),
+            new THREE.MeshStandardMaterial({ color: 0x44ff44, emissive: 0x226622 })
+        );
+        startMarker.position.set(-10, -0.8, 0);
+        scene.add(startMarker);
+        
+        const startLabelDiv = document.createElement('div');
+        startLabelDiv.textContent = '🚀 起点';
+        startLabelDiv.style.color = '#aaffaa';
+        startLabelDiv.style.fontSize = '10px';
+        const startLabel = new CSS2DObject(startLabelDiv);
+        startLabel.position.set(-10, -1.2, 0);
+        scene.add(startLabel);
+        
+        // 终点标记
+        const endMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2, 16, 16),
+            new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0x442200 })
+        );
+        endMarker.position.set(12, -0.8, 0);
+        scene.add(endMarker);
+        
+        const endLabelDiv = document.createElement('div');
+        endLabelDiv.textContent = '🏁 终点 (高速)';
+        endLabelDiv.style.color = '#ffaa88';
+        endLabelDiv.style.fontSize = '10px';
+        const endLabel = new CSS2DObject(endLabelDiv);
+        endLabel.position.set(12, -1.2, 0);
+        scene.add(endLabel);
+    }
+    
+    function addEarthClock() {
+        const clockGroup = new THREE.Group();
+        const sphereGeo = new THREE.SphereGeometry(0.5, 32, 32);
+        const sphereMat = new THREE.MeshStandardMaterial({ color: 0x4488ff, metalness: 0.6 });
+        const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+        clockGroup.add(sphere);
+        clockGroup.position.set(7, 0.5, -2);
+        scene.add(clockGroup);
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.textContent = '🌍 地面参考钟';
+        labelDiv.style.color = '#88aaff';
+        labelDiv.style.fontSize = '10px';
+        const label = new CSS2DObject(labelDiv);
+        label.position.set(7, 1.2, -2);
+        scene.add(label);
+    }
+    
+    // 初始化场景
+    function init() {
+        rocketGroup = createRocket();
+        scene.add(rocketGroup);
+        createTimeLabels();
+        addMarkers();
+        addEarthClock();
+        
+        // 添加运动方向指示
+        const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-6, -1, 2), 5, 0x88aaff, 0.8, 0.5);
+        scene.add(arrowHelper);
+        
+        // 添加光速极限指示线
+        const limitLinePoints = [];
+        for (let x = -10; x <= 14; x += 0.5) limitLinePoints.push(new THREE.Vector3(x, 1.3, 1.5));
+        const limitGeo = new THREE.BufferGeometry().setFromPoints(limitLinePoints);
+        const limitMat = new THREE.LineBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0.25 });
+        const limitLine = new THREE.Line(limitGeo, limitMat);
+        scene.add(limitLine);
+        
+        const params = { vSlider: document.getElementById('vSlider'), aSlider: document.getElementById('aSlider') };
+        params.vSlider.addEventListener('input', refreshSimulation);
+        params.aSlider.addEventListener('input', refreshSimulation);
+        
+        refreshSimulation();
+    }
+    
+    // 动画循环 - 使用慢速进度驱动
+    let lastFrameTime = performance.now();
+    
+    function animate() {
+        const now = performance.now();
+        let delta = Math.min(0.033, (now - lastFrameTime) / 1000);
+        lastFrameTime = now;
+        
+        if (isAccelerating && animationProgress < 1.0) {
+            animationProgress += animationSpeed * (delta * 30); // 保持速度稳定
+            if (animationProgress >= 1.0) {
+                animationProgress = 1.0;
+                isAccelerating = false;
+            }
+            
+            // 根据进度计算火箭位置
+            rocketPositionX = getPositionAtProgress(animationProgress, targetBeta, currentA);
+            
+            if (rocketGroup) {
+                rocketGroup.position.set(rocketPositionX, 0, 0);
+                // 轻微的摆动效果
+                const wobble = Math.sin(animationProgress * Math.PI * 8) * 0.02;
+                rocketGroup.rotation.z = wobble;
+            }
+            
+            // 更新时间和速度显示
+            updateTimeDisplay(animationProgress, targetBeta, currentA);
+            updateTrail();
+        }
+        
+        // 火焰脉冲效果
+        if (rocketGroup && isAccelerating) {
+            const flame = rocketGroup.children.find(c => c.geometry && c.geometry.type === 'ConeGeometry' && c.position.y === -0.55);
+            if (flame) {
+                const intensity = 0.5 + Math.sin(animationProgress * 50) * 0.3;
+                flame.material.emissiveIntensity = intensity;
+            }
+        }
+        
+        stars.rotation.y += 0.0005;
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    
+    init();
+    animate();
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论效应：运动参考系中的距离收缩 | 动态三维演示</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+        }
+        /* 主信息面板 - 左上角 */
+        #info-panel {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 8px 16px;
+            color: #f0f0f0;
+            pointer-events: none;
+            z-index: 15;
+            border-left: 4px solid #ffaa44;
+            max-width: 320px;
+            font-size: 12px;
+        }
+        #info-panel h1 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+        }
+        #info-panel p {
+            margin: 0;
+            font-size: 0.7rem;
+            opacity: 0.85;
+        }
+        .formula-badge {
+            font-family: monospace;
+            background: #00000055;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: #ffdd99;
+        }
+        /* 计算面板 - 右上角 */
+        #calc-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 300px;
+            background: rgba(10, 14, 28, 0.94);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 10px 14px;
+            color: #eef;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border: 1px solid rgba(255,200,100,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            z-index: 20;
+            line-height: 1.45;
+        }
+        #calc-panel h3 {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: #ffcc88;
+            text-align: center;
+            border-bottom: 1px solid #ffaa5555;
+            padding-bottom: 3px;
+        }
+        .calc-step {
+            margin-bottom: 8px;
+            border-left: 3px solid #ffaa66;
+            padding-left: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 6px 6px 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #ffdd99;
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+        }
+        .step-formula {
+            font-size: 0.68rem;
+            color: #bbddff;
+            word-break: break-word;
+            font-family: 'Courier New', 'SF Mono', monospace;
+        }
+        .calc-result {
+            background: #00000066;
+            padding: 6px;
+            border-radius: 10px;
+            margin-top: 8px;
+            text-align: center;
+            border: 1px solid #ffaa6655;
+        }
+        .result-value {
+            font-size: 0.95rem;
+            color: #ffdd99;
+            font-weight: bold;
+        }
+        /* 控制栏 - 底部 */
+        #control-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            background: rgba(20, 24, 45, 0.94);
+            backdrop-filter: blur(14px);
+            border-radius: 40px;
+            padding: 8px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+        }
+        .ctrl-group {
+            background: rgba(0,0,0,0.6);
+            border-radius: 40px;
+            padding: 4px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 140px;
+        }
+        .ctrl-group label {
+            font-size: 10px;
+            color: #ccc;
+        }
+        .ctrl-group .value {
+            font-weight: bold;
+            color: #ffaa66;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        input {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ffaa44;
+        }
+        button {
+            background: #2c5a7a;
+            border: none;
+            padding: 5px 16px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 11px;
+        }
+        button:hover {
+            background: #1a4058;
+        }
+        /* 左下角辅助 */
+        #footnote {
+            position: absolute;
+            bottom: 80px;
+            left: 16px;
+            background: rgba(0,0,0,0.5);
+            color: #ccddff;
+            padding: 2px 10px;
+            border-radius: 16px;
+            font-size: 9px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 15;
+        }
+        @media (max-width: 750px) {
+            #calc-panel { width: 270px; padding: 8px 10px; top: 12px; right: 8px; font-size: 10px; }
+            .ctrl-group { min-width: 110px; padding: 3px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="info-panel">
+    <h1>📏 相对论：运动参考系中的距离收缩</h1>
+    <p>在参考系 Σ 中，两个物体以相同速度 <i>u</i> 沿 x 轴运动，始终保持距离 <i>l</i>（固有距离）。<br>
+    <strong>观察者以速度 <i>v</i> 沿 x 轴运动，他看到的两个物体距离是多少？</strong></p>
+    <div class="formula-badge">
+        l' = l · √(1 - v²/c²) / (1 - u·v/c²)
+    </div>
+</div>
+
+<div id="calc-panel">
+    <h3>📐 相对论计算过程</h3>
+    <div class="calc-step">
+        <div class="step-title">❶ 参考系 Σ 中</div>
+        <div class="step-formula">
+            两物体速度 u，固有距离 l。<br>
+            事件1: (x=0, t=0)，事件2: (x=l, t=0)
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❷ 洛伦兹变换到观察者系 Σ'</div>
+        <div class="step-formula">
+            观察者速度 v (沿x轴)，γ = 1/√(1-β²)，β=v/c<br>
+            Δx' = γ(Δx - v·Δt) = γ·l<br>
+            Δt' = γ(Δt - v·Δx/c²) = -γ·v·l/c²
+        </div>
+    </div>
+    <div class="calc-step">
+        <div class="step-title">❸ 同时性修正（观察者看到的同时距离）</div>
+        <div class="step-formula">
+            观察者系中同时测量时，需考虑两事件时间差 Δt'。<br>
+            在 Σ' 中同时测量：Δx'_simult = Δx' - u'·Δt'<br>
+            其中 u' = (u - v)/(1 - u·v/c²) 为物体相对观察者速度<br>
+            化简得：<strong>l' = l · √(1-β²) / (1 - u·v/c²)</strong>
+        </div>
+    </div>
+    <div class="calc-result">
+        <div>🚄 观察者测量距离</div>
+        <div class="result-value">
+            l' = <span id="observed-dist">0.000</span> &nbsp; (场景单位)
+        </div>
+        <div style="font-size:9px;">相对论收缩效应 | 动态演示两物体间距</div>
+    </div>
+</div>
+
+<div id="control-bar">
+    <div class="ctrl-group">
+        <label>📦 物体速度 u / c</label>
+        <input type="range" id="uSlider" min="0" max="0.95" step="0.005" value="0.3">
+        <span class="value" id="uValue">0.300</span>
+    </div>
+    <div class="ctrl-group">
+        <label>👁️ 观察者速度 v / c</label>
+        <input type="range" id="vSlider" min="0" max="0.95" step="0.005" value="0.5">
+        <span class="value" id="vValue">0.500</span>
+    </div>
+    <div class="ctrl-group">
+        <label>📏 固有距离 l₀ (单位)</label>
+        <input type="range" id="lenSlider" min="1.0" max="4.0" step="0.05" value="2.5">
+        <span class="value" id="lenValue">2.50</span>
+    </div>
+    <button id="resetCameraBtn">🎥 重置相机</button>
+    <div style="font-size:9px; background:#00000066; padding:2px 10px; border-radius:16px;">✨ 红色/蓝色物体以相同速度u运动 | 绿色观察者以速度v运动</div>
+</div>
+<div id="footnote">
+    💡 观察者系中同时测量两个物体的位置，间距 l' 满足上述相对论公式 | 动态展示长度收缩
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // --- 初始化场景 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050b1a);
+    scene.fog = new THREE.FogExp2(0x050b1a, 0.002);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(8, 5, 14);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
+
+    // 轨道控制
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = false;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+    controls.target.set(0, 0, 0);
+    document.getElementById('resetCameraBtn').addEventListener('click', () => {
+        camera.position.set(8, 5, 14);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    });
+
+    // --- 辅助元素：网格、坐标轴、星空 ---
+    const grid = new THREE.GridHelper(18, 20, 0x77aaff, 0x335588);
+    grid.position.y = -1.2;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.35;
+    scene.add(grid);
+    
+    // 简易轴线
+    const axesHelper = new THREE.AxesHelper(7);
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.2;
+    scene.add(axesHelper);
+    
+    // 星空背景
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1000;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+        starPos[i*3] = (Math.random() - 0.5) * 200;
+        starPos[i*3+1] = (Math.random() - 0.5) * 80;
+        starPos[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.6 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+    
+    // 光照
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+    mainLight.position.set(4, 6, 3);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+    const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+    fillLight.position.set(-2, 1, 3);
+    scene.add(fillLight);
+    
+    // --- 物体模型：两个球体表示物体 A 和 B，中间有连线表示距离 ---
+    let objectA, objectB, distanceLine;
+    let currentU = 0.3;      // 物体速度 u/c
+    let currentV = 0.5;      // 观察者速度 v/c
+    let properLength = 2.5;   // 固有距离 l0
+    
+    // 物体在 Σ 系中的位置 (等速运动，保持距离 l0)
+    let objAPos = -properLength/2;
+    let objBPos = properLength/2;
+    let observerPos = 0;       // 观察者位置（用于视觉参考）
+    
+    // 观察者相机参考：我们实际用第三视角展示，但在场景中添加一个绿色的观察者标志物
+    let observerMarker;
+    
+    // 世界运动速度 (物体速度 u 对应的世界单位/秒)
+    let objectSpeedWorld = 0.0;
+    let observerSpeedWorld = 0.0;
+    const baseSpeedScale = 2.2;   // 视觉效果缩放
+    
+    function updateSpeeds() {
+        objectSpeedWorld = currentU * baseSpeedScale;
+        observerSpeedWorld = currentV * baseSpeedScale;
+    }
+    
+    // 创建物体模型 (带光晕效果的球体)
+    function createObject(color, name, yOffset = 0) {
+        const geometry = new THREE.SphereGeometry(0.45, 32, 32);
+        const material = new THREE.MeshStandardMaterial({ color: color, metalness: 0.7, roughness: 0.2, emissive: color, emissiveIntensity: 0.15 });
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.castShadow = true;
+        
+        // CSS2D 标签
+        const div = document.createElement('div');
+        div.textContent = name;
+        div.style.color = '#fff';
+        div.style.fontSize = '12px';
+        div.style.fontWeight = 'bold';
+        div.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        div.style.padding = '2px 8px';
+        div.style.borderRadius = '20px';
+        div.style.border = `1px solid ${color}`;
+        div.style.whiteSpace = 'nowrap';
+        const label = new CSS2DObject(div);
+        label.position.set(0, 0.6, 0);
+        sphere.add(label);
+        
+        sphere.userData = { baseColor: color };
+        return sphere;
+    }
+    
+    function createObserverMarker() {
+        const group = new THREE.Group();
+        const geometry = new THREE.CylinderGeometry(0.25, 0.4, 0.8, 8);
+        const material = new THREE.MeshStandardMaterial({ color: 0x44ff88, emissive: 0x226633, emissiveIntensity: 0.4 });
+        const body = new THREE.Mesh(geometry, material);
+        body.position.y = 0.4;
+        group.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshStandardMaterial({ color: 0x88ffaa, emissive: 0x226633 }));
+        head.position.y = 0.85;
+        group.add(head);
+        
+        const div = document.createElement('div');
+        div.textContent = '👁️ 观察者';
+        div.style.color = '#aaffaa';
+        div.style.fontSize = '10px';
+        div.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        div.style.padding = '1px 6px';
+        div.style.borderRadius = '12px';
+        div.style.border = '1px solid #88ff88';
+        const label = new CSS2DObject(div);
+        label.position.set(0, 1.1, 0);
+        group.add(label);
+        
+        group.position.set(0, -0.5, -1.2);
+        return group;
+    }
+    
+    function initModels() {
+        if (objectA) scene.remove(objectA);
+        if (objectB) scene.remove(objectB);
+        if (distanceLine) scene.remove(distanceLine);
+        if (observerMarker) scene.remove(observerMarker);
+        
+        objectA = createObject(0xff6666, '物体 A', 0);
+        objectB = createObject(0x66aaff, '物体 B', 0);
+        scene.add(objectA);
+        scene.add(objectB);
+        
+        // 距离连线
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffaa66 });
+        const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        distanceLine = new THREE.Line(lineGeo, lineMaterial);
+        scene.add(distanceLine);
+        
+        observerMarker = createObserverMarker();
+        scene.add(observerMarker);
+    }
+    
+    // 更新位置和距离显示 (每帧在 Σ 系中运动)
+    let timeAcc = 0;
+    
+    function updatePositionsAndDisplay(deltaTime) {
+        // 更新 Σ 系中物体的位置 (保持固有距离，整体运动)
+        objAPos += objectSpeedWorld * deltaTime;
+        objBPos += objectSpeedWorld * deltaTime;
+        
+        // 边界重置 (避免跑出视野，循环重置让演示连续)
+        if (objAPos > 8 || objBPos > 9) {
+            objAPos = -properLength/2 - 2;
+            objBPos = properLength/2 - 2;
+        }
+        if (objAPos < -9 || objBPos < -8) {
+            objAPos = -properLength/2 + 2;
+            objBPos = properLength/2 + 2;
+        }
+        
+        // 更新观察者位置（独立运动，体现相对速度）
+        observerPos += observerSpeedWorld * deltaTime;
+        if (observerPos > 9) observerPos = -8;
+        if (observerPos < -9) observerPos = 8;
+        
+        // 设置物体三维坐标
+        if (objectA) objectA.position.set(objAPos, 0.2, 0);
+        if (objectB) objectB.position.set(objBPos, 0.2, 0);
+        if (observerMarker) observerMarker.position.set(observerPos, -0.4, -1.5);
+        
+        // 更新连线：连接两个物体
+        if (distanceLine) {
+            const points = [new THREE.Vector3(objAPos, 0.35, 0), new THREE.Vector3(objBPos, 0.35, 0)];
+            distanceLine.geometry.dispose();
+            distanceLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+        }
+        
+        // 关键：计算观察者同时测量到的距离 l'
+        // 公式: l' = l0 * sqrt(1 - v^2/c^2) / (1 - u*v/c^2)
+        const beta_v = currentV;
+        const beta_u = currentU;
+        const gamma_v = 1 / Math.sqrt(1 - beta_v * beta_v);
+        const denominator = 1 - beta_u * beta_v;
+        let observedLength = properLength * Math.sqrt(1 - beta_v * beta_v) / denominator;
+        if (denominator <= 0.01) observedLength = properLength * 10; // 极端情况限幅
+        observedLength = Math.min(observedLength, 8.0);
+        
+        document.getElementById('observed-dist').innerHTML = observedLength.toFixed(3);
+        
+        // 额外动态显示文字: 在场景中显示测量距离的参考 (CSS2D漂浮)
+        updateMeasureLabel(observedLength);
+    }
+    
+    let measureLabel = null;
+    function updateMeasureLabel(lengthVal) {
+        if (!measureLabel) {
+            const div = document.createElement('div');
+            div.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            div.style.color = '#ffcc88';
+            div.style.padding = '2px 10px';
+            div.style.borderRadius = '20px';
+            div.style.fontSize = '11px';
+            div.style.fontFamily = 'monospace';
+            div.style.border = '1px solid #ffaa66';
+            div.style.whiteSpace = 'nowrap';
+            measureLabel = new CSS2DObject(div);
+            scene.add(measureLabel);
+        }
+        measureLabel.position.set(0, 1.8, 1.2);
+        measureLabel.element.textContent = `📏 观察者测量间距: ${lengthVal.toFixed(3)} (相对论预测)`;
+    }
+    
+    // 参数控制与UI联动
+    const uSlider = document.getElementById('uSlider');
+    const vSlider = document.getElementById('vSlider');
+    const lenSlider = document.getElementById('lenSlider');
+    const uValueSpan = document.getElementById('uValue');
+    const vValueSpan = document.getElementById('vValue');
+    const lenValueSpan = document.getElementById('lenValue');
+    
+    function refreshAllParams() {
+        currentU = parseFloat(uSlider.value);
+        currentV = parseFloat(vSlider.value);
+        properLength = parseFloat(lenSlider.value);
+        
+        uValueSpan.innerText = currentU.toFixed(3);
+        vValueSpan.innerText = currentV.toFixed(3);
+        lenValueSpan.innerText = properLength.toFixed(2);
+        
+        updateSpeeds();
+        
+        // 重置物体位置以保持距离 properLength
+        objAPos = -properLength/2;
+        objBPos = properLength/2;
+        // 观察者位置重置到原点附近
+        observerPos = 0;
+        if (observerMarker) observerMarker.position.set(observerPos, -0.4, -1.5);
+        
+        // 重新计算并更新显示
+        const beta_v = currentV;
+        const beta_u = currentU;
+        const denominator = 1 - beta_u * beta_v;
+        let observedLength = properLength * Math.sqrt(1 - beta_v * beta_v) / denominator;
+        if (denominator <= 0.01) observedLength = properLength * 10;
+        observedLength = Math.min(observedLength, 8.0);
+        document.getElementById('observed-dist').innerHTML = observedLength.toFixed(3);
+        if (measureLabel) {
+            measureLabel.element.textContent = `📏 观察者测量间距: ${observedLength.toFixed(3)} (相对论预测)`;
+        }
+    }
+    
+    uSlider.addEventListener('input', refreshAllParams);
+    vSlider.addEventListener('input', refreshAllParams);
+    lenSlider.addEventListener('input', refreshAllParams);
+    
+    // 初始化场景
+    function init() {
+        initModels();
+        refreshAllParams();
+        // 额外添加一个辅助半透明参考平面在y负方向
+        const planeMat = new THREE.MeshStandardMaterial({ color: 0x2266aa, transparent: true, opacity: 0.08, side: THREE.DoubleSide });
+        const refPlane = new THREE.Mesh(new THREE.PlaneGeometry(18, 6), planeMat);
+        refPlane.rotation.x = -Math.PI / 2;
+        refPlane.position.y = -1.0;
+        scene.add(refPlane);
+        
+        // 添加表示运动方向的箭头 (简单装饰)
+        const arrowColor = 0x88aaff;
+        const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-5, -0.8, 1.5), 3, arrowColor, 0.6, 0.4);
+        scene.add(arrowHelper);
+        const arrowHelper2 = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-5, -0.8, -1.2), 3, arrowColor, 0.6, 0.4);
+        scene.add(arrowHelper2);
+    }
+    
+    // 动画循环
+    let lastTime = performance.now();
+    
+    function animate() {
+        const now = performance.now();
+        let delta = Math.min(0.033, (now - lastTime) / 1000);
+        lastTime = now;
+        
+        updatePositionsAndDisplay(delta);
+        
+        // 星空缓慢旋转
+        stars.rotation.y += 0.0008;
+        stars.rotation.x += 0.0003;
+        
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+    
+    init();
+    animate();
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // 初始计算提示
+    console.log('相对论运动参考系距离演示已启动 | 动态展示物体间距收缩');
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>相对论：平行运动电荷的相互作用力</title><style>body{margin:0;overflow:hidden;font-family:monospace}#info{position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#fff;z-index:20}#calc{position:absolute;top:20px;right:20px;width:280px;background:rgba(0,0,0,0.7);padding:12px;border-radius:12px;color:#ffdd99;z-index:20}#control{position:absolute;bottom:20px;left:20px;right:20px;background:rgba(0,0,0,0.7);border-radius:40px;padding:10px;display:flex;gap:20px;justify-content:center;z-index:20}</style></head>
+<body><div id="info"><h1>⚡ 平行运动电荷的相互作用力</h1><p>两个电荷 q 以相同速度 v 平行运动，相距 l。</p></div>
+<div id="calc"><h3>📐 库仑力比较</h3><div>静止库仑力 F₀ = <span id="F0">0.00</span> N</div><div>运动时力 F = <span id="F">0.00</span> N</div><div>比值 F/F₀ = <span id="ratio">0.00</span></div></div>
+<div id="control"><div><label>速度 β = v/c</label><input type="range" id="beta" min="0" max="0.95" step="0.01" value="0.6"><span id="betaVal">0.60</span></div>
+<div><label>距离 l (cm)</label><input type="range" id="l" min="1" max="20" step="1" value="10"><span id="lVal">10</span></div>
+<button id="reset">重置相机</button></div>
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x050b1a);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(5,4,8);
+const renderer=new THREE.WebGLRenderer(); renderer.setSize(window.innerWidth,window.innerHeight); document.body.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true;
+document.getElementById('reset').addEventListener('click',()=>{camera.position.set(5,4,8); controls.target.set(0,0,0); controls.update();});
+const grid=new THREE.GridHelper(8,20,0x77aaff,0x335588); grid.position.y=-1; scene.add(grid);
+const axes=new THREE.AxesHelper(5); scene.add(axes);
+const ambient=new THREE.AmbientLight(0x404060); scene.add(ambient);
+const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(2,3,4); scene.add(light);
+let charge1, charge2;
+function update(){
+    const beta=parseFloat(document.getElementById('beta').value); const l=parseFloat(document.getElementById('l').value)/100;
+    document.getElementById('betaVal').innerText=beta; document.getElementById('lVal').innerText=document.getElementById('l').value;
+    const gamma=1/Math.sqrt(1-beta*beta); const q=1e-9; const eps0=8.85e-12;
+    const F0=q*q/(4*Math.PI*eps0*l*l); const F=F0*Math.sqrt(1-beta*beta);
+    document.getElementById('F0').innerText=F0.toExponential(3); document.getElementById('F').innerText=F.toExponential(3);
+    document.getElementById('ratio').innerText=Math.sqrt(1-beta*beta).toFixed(4);
+    if(charge1) scene.remove(charge1); if(charge2) scene.remove(charge2);
+    charge1=new THREE.Mesh(new THREE.SphereGeometry(0.2,32,32),new THREE.MeshStandardMaterial({color:0xff6666}));
+    charge1.position.set(-1,0.5,0); scene.add(charge1);
+    charge2=new THREE.Mesh(new THREE.SphereGeometry(0.2,32,32),new THREE.MeshStandardMaterial({color:0x66ff66}));
+    charge2.position.set(-1,-0.5,0); scene.add(charge2);
+}
+document.getElementById('beta').addEventListener('input',update); document.getElementById('l').addEventListener('input',update);
+update();
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+animate();
+</script>
+</body>
+</html>

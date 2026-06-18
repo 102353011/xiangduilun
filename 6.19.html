@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论：能量动量变换 | 光行差公式 | 立体角变换（三问结合可视化）</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 20px; color: white; z-index: 20; pointer-events: none; border-left: 4px solid #ffaa44; max-width: 360px; }
+        #info-panel h1 { margin: 0 0 6px; font-size: 1rem; }
+        .formula { font-family: monospace; background: #00000066; padding: 3px 6px; border-radius: 6px; margin-top: 5px; font-size: 0.7rem; color: #ffdd99; }
+        #calc-panel { position: absolute; top: 20px; right: 20px; width: 320px; background: rgba(10,14,28,0.94); backdrop-filter: blur(12px); border-radius: 16px; padding: 12px; color: #eef; font-size: 11px; border: 1px solid rgba(255,200,100,0.4); z-index: 20; pointer-events: auto; }
+        #calc-panel h3 { margin: 0 0 8px; color: #ffcc88; text-align: center; font-size: 0.9rem; }
+        .calc-step { border-left: 3px solid #ffaa66; padding-left: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.2); border-radius: 0 6px 6px 0; font-size: 10px; }
+        .result-value { font-size: 0.85rem; color: #ffdd99; font-weight: bold; text-align: center; background: #00000066; padding: 6px; border-radius: 8px; margin-top: 6px; }
+        .tab-bar { display: flex; gap: 8px; margin-bottom: 10px; justify-content: center; }
+        .tab-btn { background: #2c5a7a; border: none; padding: 4px 12px; border-radius: 20px; color: white; cursor: pointer; font-size: 11px; }
+        .tab-btn.active { background: #ffaa44; color: #1a1a2e; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        #control-bar { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(20,24,45,0.94); backdrop-filter: blur(14px); border-radius: 40px; padding: 8px 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; z-index: 25; pointer-events: auto; }
+        .ctrl-group { background: rgba(0,0,0,0.6); border-radius: 40px; padding: 3px 12px; text-align: center; }
+        .ctrl-group label { font-size: 10px; color: #ccc; display: block; }
+        input { width: 100px; cursor: pointer; accent-color: #ffaa44; }
+        .value { color: #ffaa66; font-weight: bold; font-size: 11px; }
+        button { background: #2c5a7a; border: none; padding: 4px 12px; border-radius: 40px; color: white; cursor: pointer; font-size: 11px; }
+        @media (max-width: 750px) { #calc-panel { width: 280px; } .ctrl-group { padding: 2px 8px; } input { width: 80px; } }
+    </style>
+</head>
+<body>
+<div id="info-panel"><h1>✨ 相对论：能量动量变换 | 光行差公式 | 立体角变换</h1><p>Σ'系相对于Σ系以速度v沿x轴运动。下方可视化：红色箭头为Σ系中的动量/光束方向，绿色箭头为Σ'系中的变换结果。</p>
+<div class="formula">E' = γ(E - βcp_x) | cosθ' = (cosθ-β)/(1-βcosθ) | dΩ' = dΩ/[γ²(1-βcosθ)²]</div></div>
+<div id="calc-panel">
+    <div class="tab-bar"><button class="tab-btn active" data-tab="tab1">⚡ 能量动量</button><button class="tab-btn" data-tab="tab2">🔆 光行差</button><button class="tab-btn" data-tab="tab3">📐 立体角</button></div>
+    <div id="tab1" class="tab-content active"><h3>📐 能量动量变换 (四维矢量)</h3><div class="calc-step">E' = γ(E - βcp_x), cp_x' = γ(cp_x - βE), cp_y' = cp_y</div><div class="result-value">E' = <span id="Eprime">0.00</span> MeV<br>p_x' = <span id="pxprime">0.00</span> MeV/c<br>tanθ' = <span id="tanThetaPrime">0.00</span></div></div>
+    <div id="tab2" class="tab-content"><h3>📐 光行差公式 (光子)</h3><div class="calc-step">cosθ' = (cosθ - β)/(1 - β cosθ), sinθ' = sinθ/[γ(1-β cosθ)]</div><div class="result-value">θ' = <span id="thetaPrimeLight">0.0</span>°<br>变换因子 dΩ'/dΩ = <span id="omegaRatio">0.000</span></div></div>
+    <div id="tab3" class="tab-content"><h3>📐 立体角变换</h3><div class="calc-step">dΩ' = dΩ / [γ² (1 - β cosθ)²]</div><div class="result-value">立体角比率 = <span id="solidAngleRatio">0.000</span><br>γ = <span id="gammaVal">0.00</span>, β = <span id="betaVal">0.00</span></div></div>
+</div>
+<div id="control-bar">
+    <div class="ctrl-group"><label>相对速度 β = v/c</label><input type="range" id="beta" min="0" max="0.95" step="0.005" value="0.6"><span id="betaShow" class="value">0.600</span></div>
+    <div class="ctrl-group"><label>粒子能量 E (MeV)</label><input type="range" id="E" min="50" max="800" step="10" value="400"><span id="EVal">400</span></div>
+    <div class="ctrl-group"><label>动量 p_x (MeV/c)</label><input type="range" id="px" min="-500" max="500" step="10" value="300"><span id="pxVal">300</span></div>
+    <div class="ctrl-group"><label>动量 p_y (MeV/c)</label><input type="range" id="py" min="0" max="500" step="10" value="200"><span id="pyVal">200</span></div>
+    <div class="ctrl-group"><label>光束极角 θ (度)</label><input type="range" id="thetaLight" min="0" max="180" step="1" value="45"><span id="thetaLightVal">45°</span></div>
+    <button id="resetView">🎥 重置相机</button>
+</div>
+
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// --- 初始化场景 ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050b1a);
+scene.fog = new THREE.FogExp2(0x050b1a, 0.006);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(6, 5, 10);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.left = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
+
+// 轨道控制
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.autoRotate = false;
+controls.enableZoom = true;
+controls.target.set(0, 0, 0);
+
+document.getElementById('resetView').addEventListener('click', () => {
+    camera.position.set(6, 5, 10);
+    controls.target.set(0, 0, 0);
+    controls.update();
+});
+
+// --- 辅助元素：网格、坐标轴、星空 ---
+const grid = new THREE.GridHelper(10, 24, 0x77aaff, 0x335588);
+grid.position.y = -1.5;
+grid.material.transparent = true;
+grid.material.opacity = 0.3;
+scene.add(grid);
+
+const axesHelper = new THREE.AxesHelper(6);
+axesHelper.material.transparent = true;
+axesHelper.material.opacity = 0.2;
+scene.add(axesHelper);
+
+// 星空粒子
+const starGeo = new THREE.BufferGeometry();
+const starCount = 1200;
+const starPos = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount; i++) {
+    starPos[i*3] = (Math.random() - 0.5) * 200;
+    starPos[i*3+1] = (Math.random() - 0.5) * 80;
+    starPos[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.6 });
+const stars = new THREE.Points(starGeo, starMat);
+scene.add(stars);
+
+// 光照
+const ambient = new THREE.AmbientLight(0x404060);
+scene.add(ambient);
+const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+mainLight.position.set(3, 5, 2);
+mainLight.castShadow = true;
+scene.add(mainLight);
+const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+fillLight.position.set(-2, 1, 3);
+scene.add(fillLight);
+
+// --- 可视化元素 ---
+let arrowSigma = null;      // Σ系中的动量/方向箭头 (红色)
+let arrowSigmaPrime = null; // Σ'系中的动量/方向箭头 (绿色)
+let coneSigma = null;       // Σ系中的立体角锥体 (光束)
+let coneSigmaPrime = null;  // Σ'系中的立体角锥体
+let centerPoint = null;
+
+// 辅助球体标记原点
+const originSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 8, 8),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x4488ff })
+);
+scene.add(originSphere);
+
+// 创建锥体函数 (表示立体角，给定方向、半角、颜色)
+function createCone(direction, halfAngleDeg, length, color, opacity = 0.5) {
+    const group = new THREE.Group();
+    const rad = halfAngleDeg * Math.PI / 180;
+    const radius = length * Math.tan(rad);
+    const coneGeo = new THREE.ConeGeometry(radius, length, 32, 1);
+    const material = new THREE.MeshPhongMaterial({ color: color, emissive: color, transparent: true, opacity: opacity, side: THREE.DoubleSide });
+    const cone = new THREE.Mesh(coneGeo, material);
+    
+    const dirNorm = direction.clone().normalize();
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        dirNorm
+    );
+    cone.quaternion.copy(quaternion);
+    cone.position.copy(dirNorm.clone().multiplyScalar(length / 2));
+    group.add(cone);
+    
+    // 添加边缘线框
+    const edgesGeo = new THREE.EdgesGeometry(coneGeo);
+    const edgesMat = new THREE.LineBasicMaterial({ color: color });
+    const wireframe = new THREE.LineSegments(edgesGeo, edgesMat);
+    wireframe.quaternion.copy(quaternion);
+    wireframe.position.copy(cone.position);
+    group.add(wireframe);
+    
+    return group;
+}
+
+// 更新所有可视化
+function updateVisualization() {
+    // 获取参数
+    const beta = parseFloat(document.getElementById('beta').value);
+    const gamma = 1 / Math.sqrt(1 - beta * beta);
+    const E = parseFloat(document.getElementById('E').value);
+    const px = parseFloat(document.getElementById('px').value);
+    const py = parseFloat(document.getElementById('py').value);
+    const thetaLightDeg = parseFloat(document.getElementById('thetaLight').value);
+    
+    // 更新显示
+    document.getElementById('betaShow').innerText = beta.toFixed(3);
+    document.getElementById('EVal').innerText = E;
+    document.getElementById('pxVal').innerText = px;
+    document.getElementById('pyVal').innerText = py;
+    document.getElementById('thetaLightVal').innerText = thetaLightDeg + "°";
+    document.getElementById('gammaVal').innerText = gamma.toFixed(4);
+    document.getElementById('betaVal').innerText = beta.toFixed(3);
+    
+    // === 1. 能量动量变换 ===
+    const Ep = gamma * (E - beta * px);
+    const ppx = gamma * (px - beta * E);
+    const ppy = py;
+    document.getElementById('Eprime').innerText = Ep.toFixed(2);
+    document.getElementById('pxprime').innerText = ppx.toFixed(2);
+    const thetaRad = Math.atan2(py, px);
+    const thetaPrimeRad = Math.atan2(ppy, ppx);
+    document.getElementById('tanThetaPrime').innerText = Math.tan(thetaPrimeRad).toFixed(4);
+    
+    // 动量矢量箭头 (Σ系红，Σ'系绿)
+    if (arrowSigma) scene.remove(arrowSigma);
+    if (arrowSigmaPrime) scene.remove(arrowSigmaPrime);
+    
+    const pLen = Math.sqrt(px * px + py * py);
+    const pPrimeLen = Math.sqrt(ppx * ppx + ppy * ppy);
+    const maxLen = Math.max(pLen, pPrimeLen, 1);
+    const scale = 0.015; // 缩放因子，使箭头长度适中
+    const arrowLenSigma = Math.min(pLen * scale, 2.5);
+    const arrowLenPrime = Math.min(pPrimeLen * scale, 2.5);
+    
+    if (pLen > 0.01) {
+        const dirSigma = new THREE.Vector3(px, py, 0).normalize();
+        arrowSigma = new THREE.ArrowHelper(dirSigma, new THREE.Vector3(-2, 1.2, 0), arrowLenSigma, 0xff6666, 0.5, 0.3);
+        scene.add(arrowSigma);
+    }
+    if (pPrimeLen > 0.01) {
+        const dirPrime = new THREE.Vector3(ppx, ppy, 0).normalize();
+        arrowSigmaPrime = new THREE.ArrowHelper(dirPrime, new THREE.Vector3(2, 1.2, 0), arrowLenPrime, 0x66ff66, 0.5, 0.3);
+        scene.add(arrowSigmaPrime);
+    }
+    
+    // === 2. 光行差公式 (光子) ===
+    const thetaRadLight = thetaLightDeg * Math.PI / 180;
+    const cosTheta = Math.cos(thetaRadLight);
+    const sinTheta = Math.sin(thetaRadLight);
+    const cosThetaPrime = (cosTheta - beta) / (1 - beta * cosTheta);
+    const sinThetaPrime = sinTheta / (gamma * (1 - beta * cosTheta));
+    let thetaPrimeLightRad = Math.atan2(sinThetaPrime, cosThetaPrime);
+    if (thetaPrimeLightRad < 0) thetaPrimeLightRad += Math.PI;
+    const thetaPrimeLightDeg = thetaPrimeLightRad * 180 / Math.PI;
+    document.getElementById('thetaPrimeLight').innerText = thetaPrimeLightDeg.toFixed(2);
+    
+    // 光束方向箭头 (用光子方向)
+    const lightDirSigma = new THREE.Vector3(Math.sin(thetaRadLight), Math.cos(thetaRadLight), 0).normalize();
+    const lightDirPrime = new THREE.Vector3(Math.sin(thetaPrimeLightRad), Math.cos(thetaPrimeLightRad), 0).normalize();
+    
+    // 更新或创建光束方向箭头 (为了清晰，单独显示在y轴上方区域)
+    if (window.lightArrowSigma) scene.remove(window.lightArrowSigma);
+    if (window.lightArrowPrime) scene.remove(window.lightArrowPrime);
+    window.lightArrowSigma = new THREE.ArrowHelper(lightDirSigma, new THREE.Vector3(-2, -0.5, 0.8), 1.8, 0xff8888, 0.6, 0.4);
+    window.lightArrowPrime = new THREE.ArrowHelper(lightDirPrime, new THREE.Vector3(2, -0.5, 0.8), 1.8, 0x88ff88, 0.6, 0.4);
+    scene.add(window.lightArrowSigma);
+    scene.add(window.lightArrowPrime);
+    
+    // 立体角变换因子
+    const omegaFactor = 1 / (gamma * gamma * (1 - beta * cosTheta) * (1 - beta * cosTheta));
+    document.getElementById('omegaRatio').innerHTML = omegaFactor.toFixed(5);
+    document.getElementById('solidAngleRatio').innerHTML = omegaFactor.toFixed(5);
+    
+    // === 3. 立体角锥体可视化 ===
+    if (coneSigma) scene.remove(coneSigma);
+    if (coneSigmaPrime) scene.remove(coneSigmaPrime);
+    
+    // 锥体半角示意 (固定 12° 代表 dΩ 的大小)
+    const coneHalfAngle = 12;
+    const coneLength = 2.2;
+    // Σ系锥体 (红色半透明)
+    coneSigma = createCone(lightDirSigma, coneHalfAngle, coneLength, 0xff6666, 0.35);
+    coneSigma.position.set(-2.5, -0.8, 0.5);
+    scene.add(coneSigma);
+    // Σ'系锥体 (绿色半透明)
+    coneSigmaPrime = createCone(lightDirPrime, coneHalfAngle, coneLength, 0x66ff66, 0.35);
+    coneSigmaPrime.position.set(2.5, -0.8, 0.5);
+    scene.add(coneSigmaPrime);
+    
+    // 添加CSS2D标签说明
+    updateLabels(thetaLightDeg, thetaPrimeLightDeg, omegaFactor, gamma, beta);
+}
+
+// CSS2D 文字标签
+let labelSigma = null, labelPrime = null, labelInfo = null;
+function updateLabels(thetaDeg, thetaPrimeDeg, omegaFactor, gamma, beta) {
+    if (!labelSigma) {
+        const div1 = document.createElement('div');
+        div1.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        div1.style.color = '#ff8888';
+        div1.style.padding = '2px 8px';
+        div1.style.borderRadius = '12px';
+        div1.style.fontSize = '11px';
+        div1.style.fontFamily = 'monospace';
+        labelSigma = new CSS2DObject(div1);
+        scene.add(labelSigma);
+        
+        const div2 = document.createElement('div');
+        div2.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        div2.style.color = '#88ff88';
+        div2.style.padding = '2px 8px';
+        div2.style.borderRadius = '12px';
+        div2.style.fontSize = '11px';
+        labelPrime = new CSS2DObject(div2);
+        scene.add(labelPrime);
+        
+        const div3 = document.createElement('div');
+        div3.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        div3.style.color = '#ffdd99';
+        div3.style.padding = '4px 10px';
+        div3.style.borderRadius = '16px';
+        div3.style.fontSize = '10px';
+        labelInfo = new CSS2DObject(div3);
+        scene.add(labelInfo);
+    }
+    labelSigma.position.set(-3.5, 1.2, 0.5);
+    labelSigma.element.textContent = `Σ 系: θ = ${thetaDeg.toFixed(1)}° | dΩ`;
+    labelPrime.position.set(3.5, 1.2, 0.5);
+    labelPrime.element.textContent = `Σ' 系: θ' = ${thetaPrimeDeg.toFixed(1)}° | dΩ' = dΩ × ${omegaFactor.toFixed(4)}`;
+    labelInfo.position.set(0, 2.2, 0);
+    labelInfo.element.textContent = `γ = ${gamma.toFixed(3)} | β = ${beta.toFixed(3)} | 变换因子 = 1/[γ²(1-βcosθ)²] = ${omegaFactor.toFixed(5)}`;
+}
+
+// 添加辅助指示线 (x轴方向指示)
+function addHelperElements() {
+    const xLabelDiv = document.createElement('div');
+    xLabelDiv.textContent = 'x 轴 (相对运动方向) →';
+    xLabelDiv.style.color = '#aaaaff';
+    xLabelDiv.style.fontSize = '10px';
+    const xLabel = new CSS2DObject(xLabelDiv);
+    xLabel.position.set(4.5, -1.2, 0);
+    scene.add(xLabel);
+    
+    // 添加Σ和Σ'系的标识
+    const sigmaLabelDiv = document.createElement('div');
+    sigmaLabelDiv.textContent = 'Σ 参考系';
+    sigmaLabelDiv.style.color = '#ff8888';
+    sigmaLabelDiv.style.fontSize = '10px';
+    sigmaLabelDiv.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    sigmaLabelDiv.style.padding = '2px 8px';
+    sigmaLabelDiv.style.borderRadius = '12px';
+    const sigmaLabel = new CSS2DObject(sigmaLabelDiv);
+    sigmaLabel.position.set(-3, -1.5, 0);
+    scene.add(sigmaLabel);
+    
+    const sigmaPrimeLabelDiv = document.createElement('div');
+    sigmaPrimeLabelDiv.textContent = 'Σ\' 参考系';
+    sigmaPrimeLabelDiv.style.color = '#88ff88';
+    sigmaPrimeLabelDiv.style.fontSize = '10px';
+    sigmaPrimeLabelDiv.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    sigmaPrimeLabelDiv.style.padding = '2px 8px';
+    sigmaPrimeLabelDiv.style.borderRadius = '12px';
+    const sigmaPrimeLabel = new CSS2DObject(sigmaPrimeLabelDiv);
+    sigmaPrimeLabel.position.set(3, -1.5, 0);
+    scene.add(sigmaPrimeLabel);
+}
+
+// 参数绑定与初始化
+function bindEvents() {
+    const betaSlider = document.getElementById('beta');
+    const eSlider = document.getElementById('E');
+    const pxSlider = document.getElementById('px');
+    const pySlider = document.getElementById('py');
+    const thetaSlider = document.getElementById('thetaLight');
+    
+    betaSlider.addEventListener('input', updateVisualization);
+    eSlider.addEventListener('input', updateVisualization);
+    pxSlider.addEventListener('input', updateVisualization);
+    pySlider.addEventListener('input', updateVisualization);
+    thetaSlider.addEventListener('input', updateVisualization);
+}
+
+// 选项卡切换
+function initTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            tabs.forEach(b => b.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+}
+
+// 动画循环
+let lastTime = performance.now();
+function animate() {
+    const now = performance.now();
+    const delta = Math.min(0.033, (now - lastTime) / 1000);
+    lastTime = now;
+    
+    stars.rotation.y += 0.0008;
+    stars.rotation.x += 0.0003;
+    
+    controls.update();
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+    requestAnimationFrame(animate);
+}
+
+// 启动
+function init() {
+    bindEvents();
+    initTabs();
+    addHelperElements();
+    updateVisualization();
+    animate();
+}
+
+init();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

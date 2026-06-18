@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论：静止粒子衰变 | 动量与能量计算</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
+        #info-panel { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px 20px; color: white; z-index: 20; pointer-events: none; border-left: 4px solid #ffaa44; max-width: 340px; }
+        #info-panel h1 { margin: 0 0 6px; font-size: 1.1rem; }
+        .formula { font-family: monospace; background: #00000066; padding: 4px 8px; border-radius: 8px; margin-top: 8px; font-size: 0.8rem; color: #ffdd99; }
+        #calc-panel { position: absolute; top: 20px; right: 20px; width: 300px; background: rgba(10,14,28,0.92); backdrop-filter: blur(12px); border-radius: 16px; padding: 12px; color: #eef; font-size: 12px; border: 1px solid rgba(255,200,100,0.4); z-index: 20; pointer-events: auto; }
+        #calc-panel h3 { margin: 0 0 10px; color: #ffcc88; text-align: center; }
+        .calc-step { border-left: 3px solid #ffaa66; padding-left: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.2); border-radius: 0 8px 8px 0; }
+        .result-value { font-size: 1rem; color: #ffdd99; font-weight: bold; text-align: center; background: #00000066; padding: 8px; border-radius: 10px; margin-top: 8px; }
+        #control-bar { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(20,24,45,0.94); backdrop-filter: blur(14px); border-radius: 40px; padding: 10px 20px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; z-index: 25; pointer-events: auto; }
+        .ctrl-group { background: rgba(0,0,0,0.6); border-radius: 40px; padding: 5px 18px; text-align: center; }
+        .ctrl-group label { font-size: 11px; color: #ccc; display: block; }
+        input { width: 120px; cursor: pointer; accent-color: #ffaa44; }
+        .value { color: #ffaa66; font-weight: bold; }
+        button { background: #2c5a7a; border: none; padding: 6px 18px; border-radius: 40px; color: white; cursor: pointer; }
+        @media (max-width: 700px) { #calc-panel { width: 260px; } }
+    </style>
+</head>
+<body>
+<div id="info-panel"><h1>💥 粒子衰变：静止粒子 → 两个粒子</h1><p>质量为 m 的静止粒子衰变为 m₁ 和 m₂，求 m₁ 的动量 p₁ 和能量 E₁。</p><div class="formula">p₁ = (c/2m) √{[m²-(m₁+m₂)²][m²-(m₁-m₂)²]}</div><div class="formula">E₁ = (c²/2m)(m² + m₁² - m₂²)</div></div>
+<div id="calc-panel"><h3>📐 计算结果</h3><div class="calc-step">❶ 能量守恒：mc² = E₁ + E₂</div><div class="calc-step">❷ 动量守恒：p₁ = p₂</div><div class="calc-step">❸ 质能关系：E₁² = m₁²c⁴ + p₁²c²</div><div class="result-value">p₁ = <span id="p1Val">0.00</span> MeV/c<br>E₁ = <span id="E1Val">0.00</span> MeV</div></div>
+<div id="control-bar"><div class="ctrl-group"><label>母粒子质量 m (MeV/c²)</label><input type="range" id="m" min="100" max="1000" step="10" value="500"><span id="mVal" class="value">500</span></div>
+<div class="ctrl-group"><label>子粒子 m₁ (MeV/c²)</label><input type="range" id="m1" min="10" max="400" step="10" value="150"><span id="m1Val" class="value">150</span></div>
+<div class="ctrl-group"><label>子粒子 m₂ (MeV/c²)</label><input type="range" id="m2" min="10" max="400" step="10" value="200"><span id="m2Val" class="value">200</span></div>
+<button id="resetView">重置相机</button></div>
+
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x050b1a); scene.fog=new THREE.FogExp2(0x050b1a,0.008);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(5,4,8);
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(window.innerWidth,window.innerHeight); document.body.appendChild(renderer.domElement);
+const labelRenderer=new CSS2DRenderer(); labelRenderer.setSize(window.innerWidth,window.innerHeight); labelRenderer.domElement.style.position='absolute'; labelRenderer.domElement.style.top='0px'; labelRenderer.domElement.style.left='0px'; labelRenderer.domElement.style.pointerEvents='none'; document.body.appendChild(labelRenderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; document.getElementById('resetView').addEventListener('click',()=>{camera.position.set(5,4,8); controls.target.set(0,0,0); controls.update();});
+const grid=new THREE.GridHelper(8,20,0x77aaff,0x335588); grid.position.y=-1.2; scene.add(grid);
+const axes=new THREE.AxesHelper(5); axes.material.transparent=true; axes.material.opacity=0.2; scene.add(axes);
+const ambient=new THREE.AmbientLight(0x404060); scene.add(ambient);
+const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(2,3,4); scene.add(light);
+let parentSphere, child1Sphere, child2Sphere, arrow1, arrow2;
+function updateDecay(){
+    const m=parseFloat(document.getElementById('m').value); const m1=parseFloat(document.getElementById('m1').value); const m2=parseFloat(document.getElementById('m2').value);
+    document.getElementById('mVal').innerText=m; document.getElementById('m1Val').innerText=m1; document.getElementById('m2Val').innerText=m2;
+    const c=1; const p1=c/(2*m)*Math.sqrt((m*m-(m1+m2)*(m1+m2))*(m*m-(m1-m2)*(m1-m2)));
+    const E1=(m*m+m1*m1-m2*m2)/(2*m);
+    document.getElementById('p1Val').innerText=p1.toFixed(2); document.getElementById('E1Val').innerText=E1.toFixed(2);
+    if(parentSphere) scene.remove(parentSphere);
+    parentSphere=new THREE.Mesh(new THREE.SphereGeometry(0.4,32,32),new THREE.MeshStandardMaterial({color:0xffaa66,emissive:0x442200}));
+    parentSphere.position.set(-2,0,0); scene.add(parentSphere);
+    if(child1Sphere) scene.remove(child1Sphere);
+    child1Sphere=new THREE.Mesh(new THREE.SphereGeometry(0.28,32,32),new THREE.MeshStandardMaterial({color:0xff6666,emissive:0x441111}));
+    child1Sphere.position.set(1.5,0.8,0); scene.add(child1Sphere);
+    if(child2Sphere) scene.remove(child2Sphere);
+    child2Sphere=new THREE.Mesh(new THREE.SphereGeometry(0.28,32,32),new THREE.MeshStandardMaterial({color:0x66ff66,emissive:0x116611}));
+    child2Sphere.position.set(1.5,-0.8,0); scene.add(child2Sphere);
+    if(arrow1) scene.remove(arrow1); if(arrow2) scene.remove(arrow2);
+    const len=p1/150; if(len>0.01){
+        arrow1=new THREE.ArrowHelper(new THREE.Vector3(1,0.5,0).normalize(), new THREE.Vector3(0.5,0.8,0), len, 0xff8888, 0.5, 0.3);
+        arrow2=new THREE.ArrowHelper(new THREE.Vector3(1,-0.5,0).normalize(), new THREE.Vector3(0.5,-0.8,0), len, 0x88ff88, 0.5, 0.3);
+        scene.add(arrow1); scene.add(arrow2);
+    }
+}
+document.getElementById('m').addEventListener('input',updateDecay); document.getElementById('m1').addEventListener('input',updateDecay); document.getElementById('m2').addEventListener('input',updateDecay);
+updateDecay();
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); labelRenderer.render(scene,camera); }
+animate();
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); labelRenderer.setSize(window.innerWidth,window.innerHeight);});
+</script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>相对论效应：平行尺相对运动 | 动态长度收缩 (无残影版)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'PingFang SC', Roboto, monospace;
+        }
+        
+        /* 左上角主信息 */
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(5, 10, 25, 0.88);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 12px 20px;
+            color: #f5f5f5;
+            pointer-events: none;
+            z-index: 15;
+            border-left: 5px solid #ffaa44;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            max-width: 340px;
+            font-family: system-ui;
+        }
+        #info-panel h1 {
+            margin: 0 0 6px;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+        #info-panel p {
+            margin: 0;
+            font-size: 0.78rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        .formula-badge {
+            font-family: 'Courier New', monospace;
+            background: #00000066;
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #ffdd99;
+            display: inline-block;
+        }
+        
+        /* 右侧计算过程 - 重新布局不重叠 */
+        #calc-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 310px;
+            background: rgba(12, 16, 32, 0.94);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 14px 18px;
+            color: #eef;
+            font-family: 'Courier New', 'SF Mono', monospace;
+            font-size: 12.5px;
+            border: 1px solid rgba(255, 200, 100, 0.35);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            z-index: 20;
+            line-height: 1.5;
+        }
+        #calc-panel h3 {
+            margin: 0 0 12px 0;
+            font-size: 1rem;
+            color: #ffcc88;
+            text-align: center;
+            border-bottom: 2px solid #ffaa5555;
+            padding-bottom: 5px;
+        }
+        .calc-step {
+            margin-bottom: 14px;
+            border-left: 3px solid #ffaa66;
+            padding-left: 12px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 0 10px 10px 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #ffdd99;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+        .step-formula {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #bbddff;
+            word-break: break-word;
+        }
+        .calc-result-box {
+            background: #00000066;
+            padding: 8px 10px;
+            border-radius: 14px;
+            margin-top: 10px;
+            text-align: center;
+            border: 1px solid #ffaa6655;
+        }
+        .result-value {
+            font-size: 1.1rem;
+            color: #ffdd99;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        .note-foot {
+            font-size: 0.65rem;
+            text-align: center;
+            margin-top: 10px;
+            color: #aaa;
+            border-top: 1px solid #335;
+            padding-top: 6px;
+        }
+        
+        /* 底部控制栏 */
+        #control-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(20, 24, 45, 0.94);
+            backdrop-filter: blur(14px);
+            border-radius: 32px;
+            padding: 10px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            pointer-events: auto;
+        }
+        .ctrl-group {
+            background: rgba(0,0,0,0.6);
+            border-radius: 48px;
+            padding: 5px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            min-width: 170px;
+        }
+        .ctrl-group label {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: #ccc;
+        }
+        .ctrl-group .value {
+            font-weight: bold;
+            color: #ffaa66;
+            font-size: 1rem;
+            font-family: monospace;
+        }
+        input {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ffaa44;
+        }
+        button {
+            background: #2c5a7a;
+            border: none;
+            padding: 6px 20px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #1a4058;
+            transform: scale(1.02);
+        }
+        @media (max-width: 780px) {
+            #calc-panel { width: 260px; padding: 10px; top: 12px; right: 12px; font-size: 11px; }
+            .ctrl-group { min-width: 130px; padding: 4px 12px; }
+            #info-panel { max-width: 260px; font-size: 0.7rem; top: 12px; left: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="info-panel">
+        <h1>📐 相对论长度收缩 | 平行尺反向运动</h1>
+        <p>两把固有长度 <i>l</i><sub>0</sub> 的尺子，相对于实验室参考系以相同速率 <i>v</i> 沿相反方向运动。<br>
+        <strong>观测视角：站在红色尺上测量蓝色尺的长度</strong></p>
+        <div class="formula-badge">
+            l = l<sub>0</sub> · <span style="font-size:1rem;">(1 - β²) / (1 + β²)</span> &nbsp;&nbsp; (β = v/c)
+        </div>
+    </div>
+
+    <div id="calc-panel">
+        <h3>📐 相对论计算过程</h3>
+        <div class="calc-step">
+            <div class="step-title">❶ 实验室系参数</div>
+            <div class="step-formula">β = v / c = <span id="calc-beta-val">0.500</span></div>
+        </div>
+        <div class="calc-step">
+            <div class="step-title">❷ 相对速度合成 (洛伦兹变换)</div>
+            <div class="step-formula">
+                u = (v + v) / (1 + v²/c²) = 2v / (1 + β²)<br>
+                ⇒ u/c = <span id="calc-u_rel">0.800</span>
+            </div>
+        </div>
+        <div class="calc-step">
+            <div class="step-title">❸ 长度收缩因子推导</div>
+            <div class="step-formula">
+                γ<sub>rel</sub> = 1/√(1 - u²/c²) &nbsp;→&nbsp; 收缩因子 = √(1 - u²/c²)<br>
+                代入化简得：<strong class="formula" style="color:#ffcc88;">(1 - β²)/(1 + β²)</strong>
+            </div>
+        </div>
+        <div class="calc-step">
+            <div class="step-title">❹ 观测长度结果</div>
+            <div class="step-formula">
+                l = l<sub>0</sub> × (1 - β²)/(1 + β²)
+            </div>
+        </div>
+        <div class="calc-result-box">
+            <div>📏 预测观测长度 (蓝尺收缩后)</div>
+            <div class="result-value">
+                l = <span id="predicted-l">1.200</span> &nbsp; (l<sub>0</sub> = <span id="current-l0-val">2.00</span>)
+            </div>
+            <div style="font-size:10px; margin-top:4px;">蓝色尺视觉长度 = 此值，实时动态收缩</div>
+        </div>
+        <div class="note-foot">
+            ※ 从红尺参考系观测，蓝尺长度严格符合上述公式
+        </div>
+    </div>
+
+    <div id="control-bar">
+        <div class="ctrl-group">
+            <label>🚀 相对速率 β = v/c</label>
+            <input type="range" id="vSlider" min="0" max="0.95" step="0.002" value="0.5">
+            <span class="value" id="vValue">0.500</span>
+        </div>
+        <div class="ctrl-group">
+            <label>📏 固有长度 l<sub>0</sub> (视觉单位)</label>
+            <input type="range" id="lenSlider" min="0.8" max="3.2" step="0.02" value="2.0">
+            <span class="value" id="l0Value">2.00</span>
+        </div>
+        <button id="resetCameraBtn">🖱️ 重置相机视角</button>
+        <div style="font-size:11px; background:#00000066; padding:4px 12px; border-radius:20px;">收缩因子 = (1-β²)/(1+β²)</div>
+    </div>
+
+    <!-- 引入Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // ---------- 初始化场景 ----------
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x03061a);
+        scene.fog = new THREE.FogExp2(0x03061a, 0.0045);
+
+        const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5.4, 4.1, 7.9);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
+        // 轨道控制
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.zoomSpeed = 1.2;
+        controls.target.set(0, 0, 0);
+        
+        document.getElementById('resetCameraBtn').addEventListener('click', () => {
+            camera.position.set(5.4, 4.1, 7.9);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        });
+
+        // ----- 辅助场景元素 (静态，不会产生残影) -----
+        const grid = new THREE.GridHelper(17, 26, 0x77aaff, 0x335588);
+        grid.position.y = -0.85;
+        grid.material.transparent = true;
+        grid.material.opacity = 0.32;
+        scene.add(grid);
+        
+        const axes = new THREE.AxesHelper(6);
+        axes.material.transparent = true;
+        axes.material.opacity = 0.15;
+        scene.add(axes);
+        
+        // 星空粒子
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1800;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 240;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 100;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 140 - 60;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.065, transparent: true, opacity: 0.7 });
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
+        
+        // 光照
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+        mainLight.position.set(3.2, 5.5, 2.2);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
+        const fillLight = new THREE.PointLight(0x4488bb, 0.45);
+        fillLight.position.set(-2, 1.5, 3.2);
+        scene.add(fillLight);
+        const rimLight = new THREE.PointLight(0xffaa66, 0.32);
+        rimLight.position.set(1.5, 1, -3.5);
+        scene.add(rimLight);
+        
+        // 轨道指示线
+        const trackPts = [];
+        for (let x = -6.8; x <= 6.8; x += 0.2) trackPts.push(new THREE.Vector3(x, -0.74, 0));
+        const trackGeo = new THREE.BufferGeometry().setFromPoints(trackPts);
+        const trackMatLine = new THREE.LineBasicMaterial({ color: 0x3399ff, transparent: true, opacity: 0.22 });
+        const trackLine = new THREE.Line(trackGeo, trackMatLine);
+        scene.add(trackLine);
+        const trackLine2 = new THREE.Line(trackGeo, trackMatLine);
+        trackLine2.position.z = 0.22;
+        scene.add(trackLine2);
+        
+        // 中央光晕
+        const centerGlow = new THREE.Mesh(
+            new THREE.CircleGeometry(1.1, 20),
+            new THREE.MeshStandardMaterial({ color: 0x3377bb, emissive: 0x115577, transparent: true, opacity: 0.18, side: THREE.DoubleSide })
+        );
+        centerGlow.rotation.x = -Math.PI / 2;
+        centerGlow.position.y = -0.79;
+        scene.add(centerGlow);
+        
+        // ---------- 核心：彻底消除残影的关键 - 完全重建且强制清理纹理/几何体缓存 ----------
+        let currentRedRuler = null;
+        let currentBlueRuler = null;
+        let floatingLabel = null;      // CSS2D悬浮信息跟随红尺
+        
+        // 彻底清理组以及其子物体材质/几何体
+        function deepDispose(group) {
+            if (!group) return;
+            group.traverse((child) => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                        else child.material.dispose();
+                    }
+                }
+            });
+            if (group.parent) group.parent.remove(group);
+        }
+        
+        // 创建浮动信息 (CSS2D)
+        function initFloatingLabel() {
+            const div = document.createElement('div');
+            div.style.backgroundColor = 'rgba(0,0,0,0.75)';
+            div.style.color = '#ffdd99';
+            div.style.padding = '4px 14px';
+            div.style.borderRadius = '28px';
+            div.style.fontSize = '12px';
+            div.style.fontFamily = 'monospace';
+            div.style.border = '1px solid #ffaa66';
+            div.style.backdropFilter = 'blur(10px)';
+            div.style.whiteSpace = 'nowrap';
+            div.style.pointerEvents = 'none';
+            const labelObj = new CSS2DObject(div);
+            scene.add(labelObj);
+            return { label: labelObj, div: div };
+        }
+        
+        function updateFloatingText(betaVal, l0Val, observedLen) {
+            if (!floatingLabel) return;
+            const factor = (1 - betaVal*betaVal) / (1 + betaVal*betaVal);
+            floatingLabel.div.innerHTML = `🔭 红尺观测: 蓝尺长度 = ${observedLen.toFixed(3)} &nbsp; | &nbsp; 收缩因子 = ${factor.toFixed(5)}`;
+        }
+        
+        // 创建尺子的几何模型 (返回Group)
+        function buildRuler(length, bodyMat, endMat, labelText, textColor) {
+            const group = new THREE.Group();
+            // 主体长方体
+            const box = new THREE.Mesh(new THREE.BoxGeometry(length, 0.115, 0.27), bodyMat);
+            box.castShadow = true;
+            box.position.set(0, 0, 0);
+            group.add(box);
+            
+            // 端点小球
+            const capGeo = new THREE.SphereGeometry(0.085, 14, 14);
+            const leftCap = new THREE.Mesh(capGeo, endMat);
+            leftCap.position.set(-length/2, 0.045, 0);
+            const rightCap = new THREE.Mesh(capGeo, endMat);
+            rightCap.position.set(length/2, 0.045, 0);
+            group.add(leftCap);
+            group.add(rightCap);
+            
+            // 刻度装饰 (细条)
+            const stripeMat = new THREE.MeshStandardMaterial({ color: 0xddcc99 });
+            const steps = Math.max(12, Math.floor(length * 16));
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const xPos = -length/2 + t * length;
+                if (Math.abs(xPos) < 0.04) continue;
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.045, 0.12), stripeMat);
+                stripe.position.set(xPos, 0.092, 0.145);
+                group.add(stripe);
+            }
+            
+            // CSS2D文字标签
+            const div = document.createElement('div');
+            div.textContent = labelText;
+            div.style.color = textColor;
+            div.style.fontSize = '13px';
+            div.style.fontWeight = 'bold';
+            div.style.backgroundColor = 'rgba(0,0,0,0.65)';
+            div.style.padding = '2px 12px';
+            div.style.borderRadius = '24px';
+            div.style.border = `1px solid ${textColor === '#ffaa88' ? '#ff8866' : '#66aaff'}`;
+            div.style.backdropFilter = 'blur(4px)';
+            div.style.whiteSpace = 'nowrap';
+            const labelObj = new CSS2DObject(div);
+            labelObj.position.set(0, 0.28, 0);
+            group.add(labelObj);
+            
+            return group;
+        }
+        
+        // 更新右侧计算面板UI
+        function updateCalcPanel(beta, l0, observedLen) {
+            const beta2 = beta * beta;
+            const u_rel = (2 * beta) / (1 + beta2);
+            document.getElementById('calc-beta-val').innerText = beta.toFixed(5);
+            document.getElementById('calc-u_rel').innerText = u_rel.toFixed(5);
+            document.getElementById('predicted-l').innerHTML = observedLen.toFixed(5);
+            document.getElementById('current-l0-val').innerText = l0.toFixed(2);
+        }
+        
+        // ★★★ 核心重构: 完全重新创建尺子 (消除任何残影) ★★★
+        let currentBeta = 0.5;
+        let currentL0 = 2.0;
+        
+        function rebuildEverything() {
+            // 1. 彻底移除旧的尺子并销毁资源
+            if (currentRedRuler) {
+                scene.remove(currentRedRuler);
+                deepDispose(currentRedRuler);
+                currentRedRuler = null;
+            }
+            if (currentBlueRuler) {
+                scene.remove(currentBlueRuler);
+                deepDispose(currentBlueRuler);
+                currentBlueRuler = null;
+            }
+            
+            // 2. 根据当前参数计算收缩长度
+            const beta = currentBeta;
+            const beta2 = beta * beta;
+            const contractionFactor = (1 - beta2) / (1 + beta2);
+            const observedBlueLength = currentL0 * contractionFactor;
+            
+            // 3. 全新材质 (保证无残留引用)
+            const redMaterial = new THREE.MeshStandardMaterial({ color: 0xdd4444, roughness: 0.28, metalness: 0.7, emissive: 0x331100 });
+            const blueMaterial = new THREE.MeshStandardMaterial({ color: 0x3388ff, roughness: 0.3, metalness: 0.66, emissive: 0x001133 });
+            const goldMaterial = new THREE.MeshStandardMaterial({ color: 0xeeaa55, metalness: 0.85, roughness: 0.2 });
+            
+            // 红尺 (观测者, 长度 = currentL0)
+            currentRedRuler = buildRuler(currentL0, redMaterial, goldMaterial, '🔴 红尺 (观测者参考系)', '#ffaa88');
+            // 蓝尺 (观测长度收缩)
+            currentBlueRuler = buildRuler(observedBlueLength, blueMaterial, goldMaterial, `🔵 蓝尺 (观测长度 ${observedBlueLength.toFixed(2)})`, '#88ccff');
+            
+            // 存储半长信息 (可选)
+            currentRedRuler.userData = { halfLen: currentL0 / 2 };
+            currentBlueRuler.userData = { halfLen: observedBlueLength / 2 };
+            
+            scene.add(currentRedRuler);
+            scene.add(currentBlueRuler);
+            
+            // 4. 更新UI数值和悬浮信息
+            updateCalcPanel(beta, currentL0, observedBlueLength);
+            updateFloatingText(beta, currentL0, observedBlueLength);
+        }
+        
+        // 动态更新参数 (无残影)
+        function applyParameterChanges() {
+            const newBeta = parseFloat(vSlider.value);
+            const newL0 = parseFloat(lenSlider.value);
+            if (Math.abs(currentBeta - newBeta) < 0.0001 && Math.abs(currentL0 - newL0) < 0.0001) return;
+            currentBeta = newBeta;
+            currentL0 = newL0;
+            vValueSpan.innerText = currentBeta.toFixed(4);
+            l0ValueSpan.innerText = currentL0.toFixed(2);
+            // 完全重建场景中的尺子模型 (干净利落)
+            rebuildEverything();
+            // 重置两尺位置至起始点，避免飞出场外并造成视觉错位
+            redX = -2.2;
+            blueX = 2.2;
+            if (currentRedRuler) currentRedRuler.position.set(redX, 0, 0);
+            if (currentBlueRuler) currentBlueRuler.position.set(blueX, 0, 0.22);
+        }
+        
+        // ------ 动画系统: 反向运动 (相对于实验室系) ------
+        let redX = -2.2;
+        let blueX = 2.2;
+        const maxWorldSpeed = 0.047;
+        
+        function getMotionSpeed() {
+            return currentBeta * maxWorldSpeed;
+        }
+        
+        function handleBoundaryClean() {
+            const lim = 6.2;
+            if (redX > lim) {
+                redX = -4.2;
+                blueX = 2.0;
+            } else if (blueX < -lim) {
+                blueX = 4.2;
+                redX = -1.8;
+            } else if (redX < -lim) {
+                redX = 4.0;
+                blueX = -2.2;
+            } else if (blueX > lim) {
+                blueX = -4.0;
+                redX = 2.2;
+            }
+            // 防止相差过远
+            if (Math.abs(redX - blueX) > 7.8) {
+                redX = -2.0;
+                blueX = 2.0;
+            }
+        }
+        
+        // 滑块绑定
+        const vSlider = document.getElementById('vSlider');
+        const lenSlider = document.getElementById('lenSlider');
+        const vValueSpan = document.getElementById('vValue');
+        const l0ValueSpan = document.getElementById('l0Value');
+        
+        vSlider.addEventListener('input', () => {
+            applyParameterChanges();
+        });
+        lenSlider.addEventListener('input', () => {
+            applyParameterChanges();
+        });
+        
+        // 初始化悬浮标签
+        floatingLabel = initFloatingLabel();
+        
+        // 初始构建
+        function startScene() {
+            currentBeta = 0.5;
+            currentL0 = 2.0;
+            vSlider.value = "0.5";
+            lenSlider.value = "2.0";
+            vValueSpan.innerText = "0.500";
+            l0ValueSpan.innerText = "2.00";
+            rebuildEverything();
+            redX = -2.2;
+            blueX = 2.2;
+            if (currentRedRuler) currentRedRuler.position.set(redX, 0, 0);
+            if (currentBlueRuler) currentBlueRuler.position.set(blueX, 0, 0.22);
+        }
+        
+        startScene();
+        
+        // 动画循环
+        let lastTimestamp = performance.now();
+        function animate() {
+            const now = performance.now();
+            const delta = Math.min(0.033, (now - lastTimestamp) / 1000);
+            lastTimestamp = now;
+            
+            const speed = getMotionSpeed();
+            redX += speed;
+            blueX -= speed;
+            handleBoundaryClean();
+            
+            if (currentRedRuler) {
+                currentRedRuler.position.set(redX, 0.02, 0);
+                // 浮动标签跟随红尺
+                if (floatingLabel && floatingLabel.label) {
+                    floatingLabel.label.position.copy(currentRedRuler.position);
+                    floatingLabel.label.position.y += 0.72;
+                }
+            }
+            if (currentBlueRuler) {
+                currentBlueRuler.position.set(blueX, 0.02, 0.22);
+            }
+            
+            // 交错时动态光效
+            const dist = Math.abs(redX - blueX);
+            const intensity = Math.max(0, 1.0 - dist / 4.0) * 0.55;
+            rimLight.intensity = 0.32 + intensity * 0.5;
+            fillLight.intensity = 0.45 + intensity * 0.2;
+            
+            stars.rotation.y += 0.0012;
+            stars.rotation.x += 0.0006;
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 额外清理确保无任何残余CSS2D
+        console.log("三维场景已启动，调节参数无残影残留 (完全重建模式)");
+    </script>
+</body>
+</html>
